@@ -233,6 +233,142 @@
     .bar-fill { transition: none; }
   }
 
+  /* ── Live match card ─────────────────────────────────────────── */
+  #live-section {
+    margin-bottom: 36px;
+    border: 1px solid var(--rule);
+    border-left: 4px solid #e33;
+    border-radius: 8px;
+    padding: 16px 20px;
+    background: var(--bg);
+    display: none;
+  }
+  #live-section.visible   { display: block; }
+  #live-section.upcoming  { border-left-color: var(--accent); }
+  #live-section.finished  { border-left-color: #16a34a; }
+
+  .live-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #e33;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  #live-section.upcoming .live-eyebrow { color: var(--accent); }
+  #live-section.finished .live-eyebrow { color: #16a34a; }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    background: #e33;
+    border-radius: 50%;
+    animation: live-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .live-teams-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .live-team-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+  .live-team-logo { width: 32px; height: 32px; object-fit: contain; }
+  .live-team-name {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    word-break: break-word;
+  }
+
+  .live-scores-center {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .live-score-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .live-score-label-top {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .live-score-big {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .live-score-projected {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .live-score-divider {
+    width: 1px;
+    height: 44px;
+    background: var(--rule);
+    flex-shrink: 0;
+  }
+
+  .live-segbar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--surface-2);
+    margin-bottom: 7px;
+  }
+  .seg-home { height: 100%; background: #3b82f6; flex-shrink: 0; }
+  .seg-draw { height: 100%; background: var(--surface-2); flex-shrink: 0; }
+  .seg-away { height: 100%; background: #f97316; flex-shrink: 0; }
+
+  .live-prob-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .prob-home { color: #3b82f6; font-weight: 600; }
+  .prob-draw { color: var(--text-muted); text-align: center; flex: 1; }
+  .prob-away { color: #f97316; font-weight: 600; text-align: right; }
+  .live-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 14px;
+    line-height: 1.3;
+  }
+  .live-note {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
   /* ── Bracket ─────────────────────────────────────────────────── */
   .bracket-section {
     margin-top: 40px;
@@ -315,6 +451,8 @@
 </head>
 <body>
   <div class="wrap">
+    <div id="live-section"></div>
+
     <p class="eyebrow">FIFA World Cup 2026 · Title Odds</p>
     <h1>All teams by win probability</h1>
     <p class="sub">Ranked by the output of a Monte Carlo simulation model. Updated on a schedule as group-stage results come in.</p>
@@ -443,6 +581,108 @@
     }
 
     renderBracket(data.bracket);
+    renderLiveMatch(data.liveMatch);
+  }
+
+  /* ── Live match card ──────────────────────────────────────────── */
+  function renderLiveMatch(lm) {
+    const el = document.getElementById('live-section');
+    if (!lm) { el.className = ''; el.innerHTML = ''; return; }
+
+    const isFinished = lm.status === 'FINISHED';
+    const isLive     = lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
+    const isHT       = lm.status === 'PAUSED';
+    function fmtMinute(m, estimated) {
+      const tilde = estimated ? '~' : '';
+      return m > 90 ? `${tilde}90+${m - 90}'` : `${tilde}${m}'`;
+    }
+    const timeStr = isHT ? 'Half time' : isLive ? fmtMinute(lm.minute, lm.minuteEstimated) : '';
+
+    const dotHtml     = isLive ? '<span class="live-dot"></span>' : '';
+    const eyebrowText = isFinished ? 'Full time'
+                      : isLive    ? `${dotHtml} LIVE · ${timeStr}`
+                      :             'Upcoming match';
+
+    const approx = lm.minuteEstimated ? ' (approx.)' : '';
+    let noteText;
+    if (isFinished) {
+      const winner = lm.homeWin === 1 ? lm.home : lm.awayWin === 1 ? lm.away : null;
+      noteText = winner ? `${winner} won` : 'Match ended in a draw';
+    } else if (!isLive) {
+      noteText = 'Projected avg. based on Poisson simulation of the full match';
+    } else if (lm.minute >= 90) {
+      noteText = `Projected avg. — match in added time, simulating remaining stoppage${approx}`;
+    } else {
+      const minsLeft = 90 - lm.minute;
+      noteText = `Projected avg. based on Poisson simulation of the remaining ~${minsLeft} min + added time${approx}`;
+    }
+
+    // Format a probability as a percentage, showing <1% for non-zero values
+    // that round to 0 so the user knows the chance exists but is very small.
+    function fmtPct(p) {
+      if (p <= 0) return '0%';
+      const r = Math.round(p * 100);
+      return r === 0 ? '<1%' : `${r}%`;
+    }
+
+    // Segment widths for the bar (integer %, sum = 100)
+    const hw = Math.round(lm.homeWin * 100);
+    const dw = Math.round(lm.draw    * 100);
+    const aw = 100 - hw - dw;
+
+    // For a live match show current score | projected avg side by side.
+    // For upcoming only show the projected avg (no 0-0 current score needed).
+    const scoresHtml = isFinished ? `
+      <div class="live-score-col">
+        <span class="live-score-label-top">Final score</span>
+        <span class="live-score-big">${lm.homeGoals} – ${lm.awayGoals}</span>
+      </div>
+    ` : isLive ? `
+      <div class="live-score-col">
+        <span class="live-score-label-top">Current</span>
+        <span class="live-score-big">${lm.homeGoals} – ${lm.awayGoals}</span>
+      </div>
+      <div class="live-score-divider"></div>
+      <div class="live-score-col">
+        <span class="live-score-label-top">Projected avg.</span>
+        <span class="live-score-projected">${lm.expectedHome.toFixed(1)} – ${lm.expectedAway.toFixed(1)}</span>
+      </div>
+    ` : `
+      <div class="live-score-col">
+        <span class="live-score-label-top">Projected avg. score</span>
+        <span class="live-score-big">${lm.expectedHome.toFixed(1)} – ${lm.expectedAway.toFixed(1)}</span>
+      </div>
+    `;
+
+    el.className = isFinished ? 'visible finished'
+                : isLive    ? 'visible'
+                :             'visible upcoming';
+    el.innerHTML = `
+      <div class="live-eyebrow">${eyebrowText}</div>
+      <h3 class="live-title">${isFinished ? 'Match result' : isLive ? 'Current match' : 'Upcoming match'}</h3>
+      <div class="live-teams-row">
+        <div class="live-team-block">
+          <img class="live-team-logo" src="${lm.homeLogo||''}" alt="" loading="lazy"/>
+          <span class="live-team-name">${lm.home}</span>
+        </div>
+        <div class="live-scores-center">${scoresHtml}</div>
+        <div class="live-team-block">
+          <img class="live-team-logo" src="${lm.awayLogo||''}" alt="" loading="lazy"/>
+          <span class="live-team-name">${lm.away}</span>
+        </div>
+      </div>
+      <div class="live-segbar">
+        <div class="seg-home" style="width:${hw}%"></div>
+        <div class="seg-draw" style="width:${dw}%"></div>
+        <div class="seg-away" style="width:${aw}%"></div>
+      </div>
+      <div class="live-prob-labels">
+        <span class="prob-home">${fmtPct(lm.homeWin)} ${lm.home}</span>
+        <span class="prob-draw">${fmtPct(lm.draw)} draw</span>
+        <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
+      </div>
+      <p class="live-note">${noteText}</p>
+    `;
   }
 
 
