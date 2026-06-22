@@ -235,6 +235,7 @@
 
   /* ── Live match card ─────────────────────────────────────────── */
   #live-section {
+    position: relative;
     margin-bottom: 36px;
     border: 1px solid var(--rule);
     border-left: 4px solid #e33;
@@ -367,6 +368,14 @@
     font-size: 11px;
     color: var(--text-muted);
     text-align: center;
+  }
+  .live-weather-icon {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    opacity: 0.85;
   }
 
   /* ── Bracket ─────────────────────────────────────────────────── */
@@ -584,6 +593,65 @@
     renderLiveMatch(data.liveMatch, data.generatedAt);
   }
 
+  /* ── Weather icon ─────────────────────────────────────────────── */
+  function weatherIconSVG(code) {
+    const c = parseInt(code) || 0;
+    const svg = (inner, label) =>
+      `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="${label}">${inner}</svg>`;
+
+    // Cloud: overlapping circles + rect for flat bottom
+    const cloud = (col, cx=14, cy=16, s=1) =>
+      `<circle cx="${cx-4*s}" cy="${cy+s}"   r="${4.5*s}" fill="${col}"/>` +
+      `<circle cx="${cx}"     cy="${cy-s}"   r="${5.5*s}" fill="${col}"/>` +
+      `<circle cx="${cx+5*s}" cy="${cy+s}"   r="${4*s}"   fill="${col}"/>` +
+      `<rect   x="${cx-8.5*s}" y="${cy+s}" width="${17.5*s}" height="${4.5*s}" fill="${col}"/>`;
+
+    // Sun: circle + 8 rays
+    const sun = (cx=14, cy=14, r=5, col='#f59e0b') => {
+      const dirs = [[0,-1],[0,1],[-1,0],[1,0],[-0.7,-0.7],[0.7,0.7],[0.7,-0.7],[-0.7,0.7]];
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}"/>` +
+        dirs.map(([dx,dy]) =>
+          `<line x1="${(cx+dx*(r+1.5)).toFixed(1)}" y1="${(cy+dy*(r+1.5)).toFixed(1)}"` +
+          ` x2="${(cx+dx*(r+3.5)).toFixed(1)}" y2="${(cy+dy*(r+3.5)).toFixed(1)}"` +
+          ` stroke="${col}" stroke-width="2" stroke-linecap="round"/>`
+        ).join('');
+    };
+
+    const drops = (xs, y, col='#60a5fa', len=5) =>
+      xs.map(x => `<line x1="${x}" y1="${y}" x2="${x-1.5}" y2="${y+len}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>`).join('');
+
+    const snowDots = (xs, y, col='#93c5fd') =>
+      xs.map(x => `<circle cx="${x}" cy="${y}" r="1.5" fill="${col}"/>`).join('');
+
+    if (c <= 1)  return svg(sun(), 'Clear');
+    if (c === 2) return svg(sun(10, 10, 4, '#fbbf24') + cloud('#cbd5e1', 16, 18, 0.85), 'Partly cloudy');
+    if (c === 3) return svg(cloud('#94a3b8'), 'Overcast');
+
+    if (c >= 45 && c <= 48)
+      return svg(cloud('#cbd5e1', 14, 11, 0.75) +
+        `<g stroke="#94a3b8" stroke-width="2" stroke-linecap="round">` +
+        `<line x1="4" y1="19" x2="24" y2="19"/><line x1="6" y1="24" x2="22" y2="24"/></g>`, 'Fog');
+
+    if (c >= 51 && c <= 57)
+      return svg(cloud('#94a3b8') + drops([9,15,21], 23, '#93c5fd', 4), 'Drizzle');
+
+    if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) {
+      const heavy = c === 65 || c === 67 || c === 82;
+      return svg(cloud(heavy ? '#475569' : '#64748b') +
+        drops(heavy ? [7,12,17,22] : [9,15,21], 23, heavy ? '#3b82f6' : '#60a5fa'),
+        heavy ? 'Heavy rain' : 'Rain');
+    }
+
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86)
+      return svg(cloud('#cbd5e1') + snowDots([8,14,20,11,17], 25), 'Snow');
+
+    if (c >= 95)
+      return svg(cloud('#374151') +
+        `<path d="M16 17l-4 5h3.5l-2.5 6 7-8h-3.5l3-3z" fill="#fbbf24"/>`, 'Thunderstorm');
+
+    return svg(cloud('#94a3b8'), 'Weather');
+  }
+
   /* ── Live match card ──────────────────────────────────────────── */
   function renderLiveMatch(lm, generatedAt) {
     const el = document.getElementById('live-section');
@@ -623,6 +691,13 @@
       const minsLeft = 90 - lm.minute;
       noteText = `Projected avg. based on Poisson simulation of the remaining ~${minsLeft} min + added time${approx}`;
     }
+
+    const w = lm.weather;
+    const weatherIconHtml = (isLive && w) ? (() => {
+      const svg = weatherIconSVG(w.weather_code || 0);
+      const label = w.label || '';
+      return svg ? `<span class="live-weather-icon" title="${label}">${svg}</span>` : '';
+    })() : '';
 
     // Format a probability as a percentage, showing <1% for non-zero values
     // that round to 0 so the user knows the chance exists but is very small.
@@ -688,6 +763,7 @@
         <span class="prob-draw">${fmtPct(lm.draw)} draw</span>
         <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
       </div>
+      ${weatherIconHtml}
       <p class="live-note">${noteText}</p>
     `;
   }
