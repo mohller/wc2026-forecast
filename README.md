@@ -2,21 +2,19 @@
 
 A probabilistic forecast for the 2026 FIFA World Cup, updated automatically as group-stage results come in.
 
-**Live site:** https://leonel-morejon.org/wc2026-forecast/
-
 ---
 
 ## What it shows
 
 - **Win probabilities** for all 48 teams, ranked and updated after each match
-- **Projected knockout bracket** — the most frequent complete path from quarter-finals to the final across all simulations
-- **Probability trend sparklines** showing how each team's chances have evolved over recent updates of the model and matches
+- **Projected knockout bracket** — the most likely coherent path from quarter-finals through to the final
+- **Probability trend sparklines** showing how each team's chances have evolved over time
 
 ---
 
 ## How it works
 
-The backend runs a Monte Carlo simulation of the remaining tournament tens of thousands of times, producing probability estimates from the distribution of outcomes.
+The backend runs a Monte Carlo simulation of the remaining tournament, producing probability estimates from the distribution of outcomes.
 
 Two match models are available:
 
@@ -24,9 +22,9 @@ Two match models are available:
 
 **Event model** — the same expected-goals formula, but played out as 90 independent Bernoulli trials (one per minute). After each goal, a tactical mode multiplier adjusts both teams' scoring rates — a team that falls behind becomes more aggressive, one that leads becomes more conservative. Slower but captures in-game momentum shifts.
 
-Both models use a Bayesian prior seeded from FIFA ranking-derived estimates (attack and defence rates per team), blended with observed WC 2026 group-stage results as they accumulate. Weather conditions at each venue are factored in via Open-Meteo forecasts.
+Both models use a Bayesian prior blended from hand-crafted FIFA-ranking estimates, ~4 years of historical international results (weighted by recency and competition importance), and observed WC 2026 group-stage results as they accumulate. Weather conditions at each venue are factored in via Open-Meteo forecasts.
 
-The projected bracket is chosen as the most self-consistent outcome: the combination of quarter-final, semi-final and final results that appeared most frequently as a complete, coherent sequence across all simulations.
+The projected bracket is built as a coherent conditional chain: the quarter-final winner at each position is the team that advances there most often across all simulations; the semi-final matchups are drawn only from simulations where both QF winners actually met; the final is drawn only from simulations where both SF winners met. This guarantees the bracket is self-consistent — every team shown advancing in one round appears as a participant in the next.
 
 ---
 
