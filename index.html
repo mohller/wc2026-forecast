@@ -581,13 +581,20 @@
     }
 
     renderBracket(data.bracket);
-    renderLiveMatch(data.liveMatch);
+    renderLiveMatch(data.liveMatch, data.generatedAt);
   }
 
   /* ── Live match card ──────────────────────────────────────────── */
-  function renderLiveMatch(lm) {
+  function renderLiveMatch(lm, generatedAt) {
     const el = document.getElementById('live-section');
     if (!lm) { el.className = ''; el.innerHTML = ''; return; }
+
+    // Hide if the data is stale (> 20 min old) — guards against a dead
+    // scheduler leaving an IN_PLAY or PAUSED card showing indefinitely.
+    if (generatedAt) {
+      const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
+      if (ageMin > 20) { el.className = ''; el.innerHTML = ''; return; }
+    }
 
     const isFinished = lm.status === 'FINISHED';
     const isLive     = lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
