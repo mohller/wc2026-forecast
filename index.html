@@ -657,17 +657,17 @@
     const el = document.getElementById('live-section');
     if (!lm) { el.className = ''; el.innerHTML = ''; return; }
 
-    // Hide IN_PLAY/PAUSED cards if data is stale (> 20 min old) — guards
-    // against a dead scheduler leaving a live score card showing forever.
+    // Hide live-score cards if data is stale (> 20 min old) — guards against
+    // a dead scheduler leaving a live score card showing forever.
     // UPCOMING and FINISHED statuses are not suppressed by this guard.
-    const isStaleGuarded = lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
+    const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'PAUSED';
     if (isStaleGuarded && generatedAt) {
       const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
       if (ageMin > 20) { el.className = ''; el.innerHTML = ''; return; }
     }
 
     const isFinished = lm.status === 'FINISHED';
-    const isLive     = lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
+    const isLive     = lm.status === 'LIVE' || lm.status === 'PAUSED';
     const isHT       = lm.status === 'PAUSED';
     function fmtMinute(m, estimated) {
       const tilde = estimated ? '~' : '';
