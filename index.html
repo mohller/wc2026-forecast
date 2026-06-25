@@ -662,14 +662,14 @@
     // Hide live-score cards if data is stale (> 20 min old) — guards against
     // a dead scheduler leaving a live score showing forever.
     // UPCOMING and FINISHED are not suppressed by this guard.
-    const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'PAUSED';
+    const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
     if (isStaleGuarded && generatedAt) {
       const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
       if (ageMin > 20) return null;
     }
 
     const isFinished = lm.status === 'FINISHED';
-    const isLive     = lm.status === 'LIVE' || lm.status === 'PAUSED';
+    const isLive     = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
     const isHT       = lm.status === 'PAUSED';
     function fmtMinute(m, estimated) {
       const tilde = estimated ? '~' : '';
