@@ -233,20 +233,25 @@
     .bar-fill { transition: none; }
   }
 
-  /* ── Live match card ─────────────────────────────────────────── */
+  /* ── Live match card(s) ──────────────────────────────────────── */
   #live-section {
-    position: relative;
     margin-bottom: 36px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #live-section.visible { display: flex; }
+
+  .live-card {
+    position: relative;
     border: 1px solid var(--rule);
     border-left: 4px solid #e33;
     border-radius: 8px;
     padding: 16px 20px;
     background: var(--bg);
-    display: none;
   }
-  #live-section.visible   { display: block; }
-  #live-section.upcoming  { border-left-color: var(--accent); }
-  #live-section.finished  { border-left-color: #16a34a; }
+  .live-card.upcoming { border-left-color: var(--accent); }
+  .live-card.finished { border-left-color: #16a34a; }
 
   .live-eyebrow {
     font-size: 11px;
@@ -590,7 +595,7 @@
     }
 
     renderBracket(data.bracket);
-    renderLiveMatch(data.liveMatch, data.generatedAt);
+    renderLiveMatches(data.liveMatches, data.generatedAt);
   }
 
   /* ── Weather icon ─────────────────────────────────────────────── */
@@ -652,18 +657,15 @@
     return svg(cloud('#94a3b8'), 'Weather');
   }
 
-  /* ── Live match card ──────────────────────────────────────────── */
-  function renderLiveMatch(lm, generatedAt) {
-    const el = document.getElementById('live-section');
-    if (!lm) { el.className = ''; el.innerHTML = ''; return; }
-
+  /* ── Live match card(s) ───────────────────────────────────────── */
+  function renderOneCard(lm, generatedAt) {
     // Hide live-score cards if data is stale (> 20 min old) — guards against
-    // a dead scheduler leaving a live score card showing forever.
-    // UPCOMING and FINISHED statuses are not suppressed by this guard.
+    // a dead scheduler leaving a live score showing forever.
+    // UPCOMING and FINISHED are not suppressed by this guard.
     const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'PAUSED';
     if (isStaleGuarded && generatedAt) {
       const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
-      if (ageMin > 20) { el.className = ''; el.innerHTML = ''; return; }
+      if (ageMin > 20) return null;
     }
 
     const isFinished = lm.status === 'FINISHED';
@@ -701,21 +703,16 @@
       return svg ? `<span class="live-weather-icon" title="${label}">${svg}</span>` : '';
     })() : '';
 
-    // Format a probability as a percentage, showing <1% for non-zero values
-    // that round to 0 so the user knows the chance exists but is very small.
     function fmtPct(p) {
       if (p <= 0) return '0%';
       const r = Math.round(p * 100);
       return r === 0 ? '<1%' : `${r}%`;
     }
 
-    // Segment widths for the bar (integer %, sum = 100)
     const hw = Math.round(lm.homeWin * 100);
     const dw = Math.round(lm.draw    * 100);
     const aw = 100 - hw - dw;
 
-    // For a live match show current score | projected avg side by side.
-    // For upcoming only show the projected avg (no 0-0 current score needed).
     const scoresHtml = isFinished ? `
       <div class="live-score-col">
         <span class="live-score-label-top">Final score</span>
@@ -738,36 +735,44 @@
       </div>
     `;
 
-    el.className = isFinished ? 'visible finished'
-                : isLive    ? 'visible'
-                :             'visible upcoming';
-    el.innerHTML = `
-      <div class="live-eyebrow">${eyebrowText}</div>
-      <h3 class="live-title">${isFinished ? 'Match result' : isLive ? 'Current match' : 'Upcoming match'}</h3>
-      <div class="live-teams-row">
-        <div class="live-team-block">
-          <img class="live-team-logo" src="${lm.homeLogo||''}" alt="" loading="lazy"/>
-          <span class="live-team-name">${lm.home}</span>
+    const cardClass = isFinished ? 'live-card finished' : isLive ? 'live-card' : 'live-card upcoming';
+    return `
+      <div class="${cardClass}">
+        <div class="live-eyebrow">${eyebrowText}</div>
+        <h3 class="live-title">${isFinished ? 'Match result' : isLive ? 'Current match' : 'Upcoming match'}</h3>
+        <div class="live-teams-row">
+          <div class="live-team-block">
+            <img class="live-team-logo" src="${lm.homeLogo||''}" alt="" loading="lazy"/>
+            <span class="live-team-name">${lm.home}</span>
+          </div>
+          <div class="live-scores-center">${scoresHtml}</div>
+          <div class="live-team-block">
+            <img class="live-team-logo" src="${lm.awayLogo||''}" alt="" loading="lazy"/>
+            <span class="live-team-name">${lm.away}</span>
+          </div>
         </div>
-        <div class="live-scores-center">${scoresHtml}</div>
-        <div class="live-team-block">
-          <img class="live-team-logo" src="${lm.awayLogo||''}" alt="" loading="lazy"/>
-          <span class="live-team-name">${lm.away}</span>
+        <div class="live-segbar">
+          <div class="seg-home" style="width:${hw}%"></div>
+          <div class="seg-draw" style="width:${dw}%"></div>
+          <div class="seg-away" style="width:${aw}%"></div>
         </div>
-      </div>
-      <div class="live-segbar">
-        <div class="seg-home" style="width:${hw}%"></div>
-        <div class="seg-draw" style="width:${dw}%"></div>
-        <div class="seg-away" style="width:${aw}%"></div>
-      </div>
-      <div class="live-prob-labels">
-        <span class="prob-home">${fmtPct(lm.homeWin)} ${lm.home}</span>
-        <span class="prob-draw">${fmtPct(lm.draw)} draw</span>
-        <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
-      </div>
-      ${weatherIconHtml}
-      <p class="live-note">${noteText}</p>
-    `;
+        <div class="live-prob-labels">
+          <span class="prob-home">${fmtPct(lm.homeWin)} ${lm.home}</span>
+          <span class="prob-draw">${fmtPct(lm.draw)} draw</span>
+          <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
+        </div>
+        ${weatherIconHtml}
+        <p class="live-note">${noteText}</p>
+      </div>`;
+  }
+
+  function renderLiveMatches(liveMatches, generatedAt) {
+    const el = document.getElementById('live-section');
+    const items = Array.isArray(liveMatches) ? liveMatches : (liveMatches ? [liveMatches] : []);
+    const cards = items.map(lm => renderOneCard(lm, generatedAt)).filter(Boolean);
+    if (cards.length === 0) { el.className = ''; el.innerHTML = ''; return; }
+    el.className = 'visible';
+    el.innerHTML = cards.join('');
   }
 
 
