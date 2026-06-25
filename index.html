@@ -474,6 +474,7 @@
     <div class="meta-row">
       <span class="meta-pill">Last updated: <b id="updated-at">—</b></span>
       <span class="meta-pill">Model: <b id="source-label">—</b></span>
+      <span class="meta-pill" id="accuracy-pill" style="display:none">Predictions: <b id="accuracy-label">—</b></span>
     </div>
 
     <div class="board" id="board"></div>
@@ -592,6 +593,13 @@
       const btn = document.getElementById('toggle-btn');
       btn.style.display = 'block';
       btn.textContent   = `Show all ${totalTeams} teams`;
+    }
+
+    const acc = data.accuracy;
+    if (acc && acc.n_predicted > 0) {
+      document.getElementById('accuracy-pill').style.display = '';
+      document.getElementById('accuracy-label').textContent =
+        `${acc.n_correct}/${acc.n_predicted} correct (${acc.pct_correct}%)`;
     }
 
     renderBracket(data.bracket);
