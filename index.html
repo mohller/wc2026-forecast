@@ -92,20 +92,64 @@
   .model-badge.poisson { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
   .model-badge.event   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
 
-  /* ── Language picker ─────────────────────────────────────────── */
-  .lang-select {
-    font-family: var(--body);
-    font-size: 12px;
-    padding: 3px 8px;
-    border: 1px solid var(--rule);
-    border-radius: 4px;
+  /* ── Language switcher (fixed, always visible) ───────────────── */
+  #lang-switcher {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    z-index: 200;
+  }
+  html[dir="rtl"] #lang-switcher { right: auto; left: 16px; }
+
+  #lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
     background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text-muted);
     cursor: pointer;
-    margin-left: auto;
-    outline: none;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.10);
+    font-family: var(--body);
+    white-space: nowrap;
   }
-  .lang-select:hover { border-color: var(--accent); color: var(--text); }
+  #lang-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  #lang-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+    padding: 4px;
+    display: none;
+    min-width: 156px;
+  }
+  html[dir="rtl"] #lang-panel { right: auto; left: 0; }
+  #lang-panel.open { display: block; }
+
+  .lang-option {
+    display: block;
+    width: 100%;
+    padding: 7px 12px;
+    font-size: 13px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: var(--body);
+  }
+  html[dir="rtl"] .lang-option { text-align: right; }
+  .lang-option:hover { background: var(--surface); }
+  .lang-option[aria-selected="true"] { color: var(--accent); font-weight: 600; }
 
   /* ── Leaderboard ─────────────────────────────────────────────── */
   .board {
@@ -480,6 +524,32 @@
 </style>
 </head>
 <body>
+  <!-- Language switcher — fixed top-right, always visible -->
+  <div id="lang-switcher">
+    <button id="lang-btn" onclick="toggleLangPanel()" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-panel">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      <span id="lang-current-label">EN</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+    <div id="lang-panel" role="listbox" aria-label="Select language">
+      <button class="lang-option" role="option" onclick="setLang('en')" data-lang="en">English</button>
+      <button class="lang-option" role="option" onclick="setLang('zh')" data-lang="zh">中文</button>
+      <button class="lang-option" role="option" onclick="setLang('hi')" data-lang="hi">हिन्दी</button>
+      <button class="lang-option" role="option" onclick="setLang('es')" data-lang="es">Español</button>
+      <button class="lang-option" role="option" onclick="setLang('fr')" data-lang="fr">Français</button>
+      <button class="lang-option" role="option" onclick="setLang('ar')" data-lang="ar">العربية</button>
+      <button class="lang-option" role="option" onclick="setLang('bn')" data-lang="bn">বাংলা</button>
+      <button class="lang-option" role="option" onclick="setLang('pt')" data-lang="pt">Português</button>
+      <button class="lang-option" role="option" onclick="setLang('ru')" data-lang="ru">Русский</button>
+      <button class="lang-option" role="option" onclick="setLang('ur')" data-lang="ur">اردو</button>
+    </div>
+  </div>
+
   <div class="wrap">
     <div id="live-section"></div>
 
@@ -491,18 +561,6 @@
       <span class="meta-pill"><span id="label-updated">Last updated:</span> <b id="updated-at">—</b></span>
       <span class="meta-pill"><span id="label-model">Model:</span> <b id="source-label">—</b></span>
       <span class="meta-pill" id="accuracy-pill" style="display:none"><span id="label-predictions">Predictions:</span> <b id="accuracy-label">—</b></span>
-      <select class="lang-select" id="lang-picker" onchange="setLang(this.value)" aria-label="Language">
-        <option value="en">English</option>
-        <option value="zh">中文</option>
-        <option value="hi">हिन्दी</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-        <option value="ar">العربية</option>
-        <option value="bn">বাংলা</option>
-        <option value="pt">Português</option>
-        <option value="ru">Русский</option>
-        <option value="ur">اردو</option>
-      </select>
     </div>
 
     <div class="board" id="board"></div>
@@ -714,41 +772,41 @@
     },
     ar: {
       pageTitle:    'توقعات كأس العالم 2026',
-      eyebrow:      'كأس العالم FIFA 2026 · احتمالات الفوز بالبطولة',
-      h1:           'جميع الفرق مرتبة حسب احتمال الفوز',
-      sub:          'مرتبة وفق نتائج نموذج محاكاة مونتي كارلو. تُحدَّث باستمرار مع ورود نتائج دور المجموعات.',
+      eyebrow:      'كأس العالم FIFA 2026 · حظوظ التتويج',
+      h1:           'جميع المنتخبات مرتّبةً حسب نسبة الفوز',
+      sub:          'مرتبة وفق مخرجات نموذج محاكاة مونتي كارلو، وتتحدّث مع ورود نتائج دور المجموعات.',
       lastUpdated:  'آخر تحديث:',
       modelLabel:   'النموذج:',
-      predictions:  'التوقعات:',
+      predictions:  'دقة التوقعات:',
       showTopOnly:  'عرض أفضل 10 فقط',
-      showAll:      n => `عرض جميع الـ ${n} فرق`,
+      showAll:      n => `عرض جميع المنتخبات الـ ${n}`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} صحيح (${pct}%)`,
       fullTime:     'نهاية المباراة',
       live:         'مباشر',
-      halfTime:     'استراحة المنتصف',
+      halfTime:     'استراحة نصف الشوط',
       upcoming:     'مباراة قادمة',
       matchResult:  'نتيجة المباراة',
-      currentMatch: 'المباراة الحالية',
+      currentMatch: 'المباراة الجارية',
       upcomingMatch:'مباراة قادمة',
       finalScore:   'النتيجة النهائية',
-      current:      'الحالية',
-      projAvg:      'المتوسط المتوقع',
-      projAvgScore: 'متوسط النتيجة المتوقعة',
+      current:      'الحالي',
+      projAvg:      'متوسط متوقع',
+      projAvgScore: 'متوسط النتيجة المتوقع',
       draw:         'تعادل',
-      won:          name => `فازت ${name}`,
+      won:          name => `فاز ${name}`,
       drawnMatch:   'انتهت المباراة بالتعادل',
       noteUpcoming: 'متوسط متوقع بناءً على محاكاة بواسون لكامل المباراة',
-      noteAddedTime:'متوسط متوقع — المباراة في الوقت الإضافي، جارٍ محاكاة الوقت المتبقي',
-      noteRemaining:n => `متوسط متوقع بناءً على محاكاة بواسون للـ ~${n} دقيقة المتبقية + الوقت الإضافي`,
+      noteAddedTime:'متوسط متوقع — المباراة في الوقت بدل الضائع',
+      noteRemaining:n => `متوسط متوقع بناءً على محاكاة بواسون للدقائق الـ ~${n} المتبقية والوقت بدل الضائع`,
       approx:       ' (تقريباً)',
       errorLoad:    'تعذّر تحميل النتائج',
       bracketEyebrow:'توقعات مونتي كارلو',
-      bracketTitle: 'جدول دور خروج المغلوب المتوقع',
-      bracketNote:  (total, n, pct) => `متوقع من ${total} محاكاة. يُظهر كل ربع نهائي الفريق الأكثر تأهلاً (${n} من أصل ${total} تشغيل، ${pct}%). أُخذت مباريات نصف النهائي والنهائي من المحاكاة التي التقى فيها فائزا ربع النهائي فعلياً.`,
+      bracketTitle: 'مخطط الأدوار الإقصائية المتوقع',
+      bracketNote:  (total, n, pct) => `مستخرج من ${total} محاكاة. يُظهر كل دور ربع النهائي الفريقَ الأكثر تأهلاً (${n} من أصل ${total}، أي ${pct}٪). جاءت مواجهات نصف النهائي والنهائي من المحاكاة التي التقى فيها الفائزان فعلاً.`,
       qf:           'ربع النهائي',
       sf:           'نصف النهائي',
       final:        'النهائي',
-      footer:       'يُسجَّل كل تشغيل في قاعدة بيانات SQLite محلية مع المدخلات التي أنتجته. تقرأ هذه الصفحة فقط أحدث لقطة من التخزين السحابي — لا يُرفع أي شيء إلى هذا المستودع عند تحديث النتائج.',
+      footer:       'يُسجَّل كل تشغيل في قاعدة بيانات SQLite محلية مع مدخلاته. تقرأ هذه الصفحة آخر لقطة من التخزين السحابي فحسب — ولا يُرفع أي شيء إلى هذا المستودع عند تحديث النتائج.',
     },
     bn: {
       pageTitle:    'বিশ্বকাপ ২০২৬ পূর্বাভাস',
@@ -907,6 +965,13 @@
   /* ── i18n core ────────────────────────────────────────────────── */
   let currentLang = 'en';
 
+  // Short labels shown on the button for each language
+  const LANG_LABELS = {
+    en:'EN', zh:'中文', hi:'हिं', es:'ES',
+    fr:'FR', ar:'ع',   bn:'বাং', pt:'PT',
+    ru:'РУ', ur:'اُر',
+  };
+
   function t(key, ...args) {
     const langObj = LANGS[currentLang] || LANGS.en;
     const entry   = key in langObj ? langObj[key] : LANGS.en[key];
@@ -921,6 +986,22 @@
     return LANGS[nav] ? nav : 'en';
   }
 
+  function toggleLangPanel() {
+    const panel = document.getElementById('lang-panel');
+    const btn   = document.getElementById('lang-btn');
+    const open  = panel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', String(open));
+  }
+
+  // Close the panel when clicking anywhere outside the switcher
+  document.addEventListener('click', e => {
+    const sw = document.getElementById('lang-switcher');
+    if (sw && !sw.contains(e.target)) {
+      document.getElementById('lang-panel').classList.remove('open');
+      document.getElementById('lang-btn').setAttribute('aria-expanded', 'false');
+    }
+  });
+
   function setLang(lang) {
     if (!LANGS[lang]) return;
     currentLang = lang;
@@ -929,9 +1010,15 @@
     document.documentElement.lang = lang;
     document.documentElement.dir  = rtl ? 'rtl' : 'ltr';
     document.title = t('pageTitle');
+    // Update button label and highlight active option
+    document.getElementById('lang-current-label').textContent = LANG_LABELS[lang] || lang.toUpperCase();
+    document.querySelectorAll('.lang-option').forEach(btn => {
+      btn.setAttribute('aria-selected', btn.dataset.lang === lang ? 'true' : 'false');
+    });
+    // Close panel
+    document.getElementById('lang-panel').classList.remove('open');
+    document.getElementById('lang-btn').setAttribute('aria-expanded', 'false');
     updateStaticText();
-    const picker = document.getElementById('lang-picker');
-    if (picker) picker.value = lang;
     if (_cachedData) render(_cachedData, _cachedHistory);
   }
 
@@ -1372,8 +1459,11 @@
   document.documentElement.lang = currentLang;
   document.documentElement.dir  = (currentLang === 'ar' || currentLang === 'ur') ? 'rtl' : 'ltr';
   document.title = t('pageTitle');
+  document.getElementById('lang-current-label').textContent = LANG_LABELS[currentLang] || 'EN';
+  document.querySelectorAll('.lang-option').forEach(btn => {
+    btn.setAttribute('aria-selected', btn.dataset.lang === currentLang ? 'true' : 'false');
+  });
   updateStaticText();
-  document.getElementById('lang-picker').value = currentLang;
 </script>
 </body>
 </html>
