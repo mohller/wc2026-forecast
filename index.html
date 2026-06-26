@@ -65,6 +65,7 @@
   .meta-row {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 16px;
     margin-bottom: 20px;
     padding-bottom: 16px;
@@ -90,6 +91,21 @@
   }
   .model-badge.poisson { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
   .model-badge.event   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+  /* ── Language picker ─────────────────────────────────────────── */
+  .lang-select {
+    font-family: var(--body);
+    font-size: 12px;
+    padding: 3px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-left: auto;
+    outline: none;
+  }
+  .lang-select:hover { border-color: var(--accent); color: var(--text); }
 
   /* ── Leaderboard ─────────────────────────────────────────────── */
   .board {
@@ -467,14 +483,26 @@
   <div class="wrap">
     <div id="live-section"></div>
 
-    <p class="eyebrow">FIFA World Cup 2026 · Title Odds</p>
-    <h1>All teams by win probability</h1>
-    <p class="sub">Ranked by the output of a Monte Carlo simulation model. Updated on a schedule as group-stage results come in.</p>
+    <p class="eyebrow" id="page-eyebrow">FIFA World Cup 2026 · Title Odds</p>
+    <h1 id="page-h1">All teams by win probability</h1>
+    <p class="sub" id="page-sub">Ranked by the output of a Monte Carlo simulation model. Updated on a schedule as group-stage results come in.</p>
 
     <div class="meta-row">
-      <span class="meta-pill">Last updated: <b id="updated-at">—</b></span>
-      <span class="meta-pill">Model: <b id="source-label">—</b></span>
-      <span class="meta-pill" id="accuracy-pill" style="display:none">Predictions: <b id="accuracy-label">—</b></span>
+      <span class="meta-pill"><span id="label-updated">Last updated:</span> <b id="updated-at">—</b></span>
+      <span class="meta-pill"><span id="label-model">Model:</span> <b id="source-label">—</b></span>
+      <span class="meta-pill" id="accuracy-pill" style="display:none"><span id="label-predictions">Predictions:</span> <b id="accuracy-label">—</b></span>
+      <select class="lang-select" id="lang-picker" onchange="setLang(this.value)" aria-label="Language">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+        <option value="hi">हिन्दी</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="ar">العربية</option>
+        <option value="bn">বাংলা</option>
+        <option value="pt">Português</option>
+        <option value="ru">Русский</option>
+        <option value="ur">اردو</option>
+      </select>
     </div>
 
     <div class="board" id="board"></div>
@@ -483,10 +511,8 @@
     <div id="bracket"></div>
 
     <footer>
-      Each run is recorded in a local SQLite database together with the inputs that produced it.
-      This page reads only the latest snapshot from object storage —
-      nothing is committed to this repository when results update. ·
-      <a href="https://leonel-morejon.org">leonel-morejon.org</a>
+      <span id="footer-text">Each run is recorded in a local SQLite database together with the inputs that produced it. This page reads only the latest snapshot from object storage — nothing is committed to this repository when results update.</span>
+      · <a href="https://leonel-morejon.org">leonel-morejon.org</a>
     </footer>
   </div>
 
@@ -494,10 +520,441 @@
   const DATA_URL    = "https://pub-ee5dd29fcf0744ecbb3b8871667380a5.r2.dev/latest.json";
   const HISTORY_URL = "https://pub-ee5dd29fcf0744ecbb3b8871667380a5.r2.dev/history.json";
 
+  /* ── Translations ─────────────────────────────────────────────── */
+  const LANGS = {
+    en: {
+      pageTitle:    'WC 2026 Forecast',
+      eyebrow:      'FIFA World Cup 2026 · Title Odds',
+      h1:           'All teams by win probability',
+      sub:          'Ranked by the output of a Monte Carlo simulation model. Updated on a schedule as group-stage results come in.',
+      lastUpdated:  'Last updated:',
+      modelLabel:   'Model:',
+      predictions:  'Predictions:',
+      showTopOnly:  'Show top 10 only',
+      showAll:      n => `Show all ${n} teams`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} correct (${pct}%)`,
+      fullTime:     'Full time',
+      live:         'LIVE',
+      halfTime:     'Half time',
+      upcoming:     'Upcoming match',
+      matchResult:  'Match result',
+      currentMatch: 'Current match',
+      upcomingMatch:'Upcoming match',
+      finalScore:   'Final score',
+      current:      'Current',
+      projAvg:      'Projected avg.',
+      projAvgScore: 'Projected avg. score',
+      draw:         'draw',
+      won:          name => `${name} won`,
+      drawnMatch:   'Match ended in a draw',
+      noteUpcoming: 'Projected avg. based on Poisson simulation of the full match',
+      noteAddedTime:'Projected avg. — match in added time, simulating remaining stoppage',
+      noteRemaining:n => `Projected avg. based on Poisson simulation of the remaining ~${n} min + added time`,
+      approx:       ' (approx.)',
+      errorLoad:    'Could not load results',
+      bracketEyebrow:'Monte Carlo projection',
+      bracketTitle: 'Projected Knockout Bracket',
+      bracketNote:  (total, n, pct) => `Projected from ${total} simulations. Each quarter-final shows the team that advances there most often (${n} of ${total} runs, ${pct}%). Semi-final and final pairings are drawn from the simulations where both quarter-final winners actually met — ensuring every round feeds coherently into the next.`,
+      qf:           'Quarter-Finals',
+      sf:           'Semi-Finals',
+      final:        'The Final',
+      footer:       'Each run is recorded in a local SQLite database together with the inputs that produced it. This page reads only the latest snapshot from object storage — nothing is committed to this repository when results update.',
+    },
+    zh: {
+      pageTitle:    '2026世界杯预测',
+      eyebrow:      '2026 FIFA世界杯 · 夺冠赔率',
+      h1:           '所有球队夺冠概率排名',
+      sub:          '基于蒙特卡洛模拟模型的输出进行排名，随小组赛结果实时更新。',
+      lastUpdated:  '最后更新：',
+      modelLabel:   '模型：',
+      predictions:  '预测：',
+      showTopOnly:  '只显示前10名',
+      showAll:      n => `显示全部 ${n} 支球队`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} 正确 (${pct}%)`,
+      fullTime:     '全场结束',
+      live:         '直播',
+      halfTime:     '中场休息',
+      upcoming:     '即将到来的比赛',
+      matchResult:  '比赛结果',
+      currentMatch: '当前比赛',
+      upcomingMatch:'即将进行的比赛',
+      finalScore:   '最终比分',
+      current:      '当前比分',
+      projAvg:      '预计平均',
+      projAvgScore: '预计平均比分',
+      draw:         '平局',
+      won:          name => `${name} 获胜`,
+      drawnMatch:   '比赛以平局结束',
+      noteUpcoming: '基于泊松模拟整场比赛的预计平均值',
+      noteAddedTime:'预计平均值 — 比赛进入补时阶段，正在模拟剩余时间',
+      noteRemaining:n => `基于泊松模拟剩余约 ${n} 分钟及补时的预计平均值`,
+      approx:       '（约）',
+      errorLoad:    '无法加载结果',
+      bracketEyebrow:'蒙特卡洛预测',
+      bracketTitle: '预计淘汰赛对阵',
+      bracketNote:  (total, n, pct) => `基于 ${total} 次模拟的预测。每场四分之一决赛展示最常晋级的球队（${total} 次中有 ${n} 次，占 ${pct}%）。半决赛和决赛的对阵来自双方四分之一决赛胜者相遇的模拟结果。`,
+      qf:           '四分之一决赛',
+      sf:           '半决赛',
+      final:        '决赛',
+      footer:       '每次运行结果均记录在本地 SQLite 数据库中，包含产生该结果的输入数据。本页面仅读取对象存储中的最新快照——结果更新时不会向此代码库提交任何内容。',
+    },
+    hi: {
+      pageTitle:    'विश्व कप 2026 पूर्वानुमान',
+      eyebrow:      'FIFA विश्व कप 2026 · खिताब की संभावना',
+      h1:           'जीत की संभावना के अनुसार सभी टीमें',
+      sub:          'मोंटे कार्लो सिमुलेशन मॉडल के आधार पर रैंक की गई। ग्रुप स्टेज के परिणाम आने के साथ अपडेट होती है।',
+      lastUpdated:  'अंतिम अपडेट:',
+      modelLabel:   'मॉडल:',
+      predictions:  'भविष्यवाणियाँ:',
+      showTopOnly:  'केवल शीर्ष 10 दिखाएं',
+      showAll:      n => `सभी ${n} टीमें दिखाएं`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} सही (${pct}%)`,
+      fullTime:     'पूरा समय',
+      live:         'लाइव',
+      halfTime:     'हाफ टाइम',
+      upcoming:     'आगामी मैच',
+      matchResult:  'मैच परिणाम',
+      currentMatch: 'वर्तमान मैच',
+      upcomingMatch:'आगामी मैच',
+      finalScore:   'अंतिम स्कोर',
+      current:      'वर्तमान',
+      projAvg:      'अनुमानित औसत',
+      projAvgScore: 'अनुमानित औसत स्कोर',
+      draw:         'ड्रॉ',
+      won:          name => `${name} जीता`,
+      drawnMatch:   'मैच ड्रॉ रहा',
+      noteUpcoming: 'पूरे मैच के पॉइसन सिमुलेशन पर आधारित अनुमानित औसत',
+      noteAddedTime:'अनुमानित औसत — मैच अतिरिक्त समय में, शेष समय का सिमुलेशन',
+      noteRemaining:n => `शेष ~${n} मिनट + अतिरिक्त समय के पॉइसन सिमुलेशन पर आधारित अनुमानित औसत`,
+      approx:       ' (लगभग)',
+      errorLoad:    'परिणाम लोड नहीं हो सके',
+      bracketEyebrow:'मोंटे कार्लो प्रक्षेपण',
+      bracketTitle: 'प्रक्षेपित नॉकआउट ब्रैकेट',
+      bracketNote:  (total, n, pct) => `${total} सिमुलेशन से अनुमानित। प्रत्येक क्वार्टर-फाइनल में वह टीम दिखाई गई है जो सबसे अधिक बार आगे बढ़ती है (${total} में से ${n} बार, ${pct}%)। सेमी-फाइनल और फाइनल की जोड़ी उन सिमुलेशन से ली गई है जहाँ दोनों क्वार्टर-फाइनल विजेता वास्तव में मिले।`,
+      qf:           'क्वार्टर-फाइनल',
+      sf:           'सेमी-फाइनल',
+      final:        'फाइनल',
+      footer:       'प्रत्येक रन को उसके इनपुट के साथ एक स्थानीय SQLite डेटाबेस में रिकॉर्ड किया जाता है। यह पेज केवल ऑब्जेक्ट स्टोरेज से नवीनतम स्नैपशॉट पढ़ता है — परिणाम अपडेट होने पर इस रिपॉजिटरी में कुछ भी कमिट नहीं किया जाता।',
+    },
+    es: {
+      pageTitle:    'Pronóstico Mundial 2026',
+      eyebrow:      'Copa Mundial FIFA 2026 · Probabilidades de título',
+      h1:           'Todos los equipos por probabilidad de ganar',
+      sub:          'Clasificados según el resultado de un modelo de simulación Monte Carlo. Actualizado conforme llegan los resultados de la fase de grupos.',
+      lastUpdated:  'Última actualización:',
+      modelLabel:   'Modelo:',
+      predictions:  'Predicciones:',
+      showTopOnly:  'Mostrar solo el top 10',
+      showAll:      n => `Mostrar los ${n} equipos`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} correctas (${pct}%)`,
+      fullTime:     'Tiempo completo',
+      live:         'EN VIVO',
+      halfTime:     'Medio tiempo',
+      upcoming:     'Próximo partido',
+      matchResult:  'Resultado del partido',
+      currentMatch: 'Partido en curso',
+      upcomingMatch:'Próximo partido',
+      finalScore:   'Marcador final',
+      current:      'Actual',
+      projAvg:      'Prom. proyectado',
+      projAvgScore: 'Marcador prom. proyectado',
+      draw:         'empate',
+      won:          name => `${name} ganó`,
+      drawnMatch:   'El partido terminó en empate',
+      noteUpcoming: 'Promedio proyectado basado en simulación de Poisson del partido completo',
+      noteAddedTime:'Promedio proyectado — partido en tiempo adicional, simulando el tiempo restante',
+      noteRemaining:n => `Promedio proyectado basado en simulación de Poisson de los ~${n} min restantes + tiempo adicional`,
+      approx:       ' (aprox.)',
+      errorLoad:    'No se pudieron cargar los resultados',
+      bracketEyebrow:'Proyección Monte Carlo',
+      bracketTitle: 'Cuadro de eliminatorias proyectado',
+      bracketNote:  (total, n, pct) => `Proyectado a partir de ${total} simulaciones. Cada cuartos de final muestra el equipo que avanza con mayor frecuencia (${n} de ${total} simulaciones, ${pct}%). Los emparejamientos de semifinales y final se toman de las simulaciones donde ambos ganadores de cuartos se enfrentaron realmente.`,
+      qf:           'Cuartos de Final',
+      sf:           'Semifinales',
+      final:        'La Final',
+      footer:       'Cada ejecución queda registrada en una base de datos SQLite local junto con los parámetros que la generaron. Esta página solo lee el último snapshot del almacenamiento de objetos — nada se sube a este repositorio cuando los resultados se actualizan.',
+    },
+    fr: {
+      pageTitle:    'Pronostic CM 2026',
+      eyebrow:      'Coupe du Monde FIFA 2026 · Cotes de victoire',
+      h1:           'Toutes les équipes par probabilité de victoire',
+      sub:          'Classées selon les résultats d\'un modèle de simulation Monte Carlo. Mis à jour au fil des résultats de la phase de groupes.',
+      lastUpdated:  'Dernière mise à jour :',
+      modelLabel:   'Modèle :',
+      predictions:  'Prédictions :',
+      showTopOnly:  'Afficher uniquement le top 10',
+      showAll:      n => `Afficher les ${n} équipes`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} correctes (${pct}%)`,
+      fullTime:     'Temps plein',
+      live:         'EN DIRECT',
+      halfTime:     'Mi-temps',
+      upcoming:     'Match à venir',
+      matchResult:  'Résultat du match',
+      currentMatch: 'Match en cours',
+      upcomingMatch:'Match à venir',
+      finalScore:   'Score final',
+      current:      'Actuel',
+      projAvg:      'Moy. projetée',
+      projAvgScore: 'Score moy. projeté',
+      draw:         'match nul',
+      won:          name => `${name} a gagné`,
+      drawnMatch:   'Le match s\'est terminé sur un match nul',
+      noteUpcoming: 'Moyenne projetée basée sur une simulation de Poisson du match complet',
+      noteAddedTime:'Moyenne projetée — match en prolongation, simulation du temps restant',
+      noteRemaining:n => `Moyenne projetée basée sur une simulation de Poisson des ~${n} min restantes + arrêts de jeu`,
+      approx:       ' (approx.)',
+      errorLoad:    'Impossible de charger les résultats',
+      bracketEyebrow:'Projection Monte Carlo',
+      bracketTitle: 'Tableau des éliminatoires projeté',
+      bracketNote:  (total, n, pct) => `Projeté à partir de ${total} simulations. Chaque quart de finale montre l'équipe qui se qualifie le plus souvent (${n} sur ${total} simulations, ${pct}%). Les affiches des demi-finales et de la finale sont tirées des simulations où les deux vainqueurs des quarts se sont effectivement rencontrés.`,
+      qf:           'Quarts de Finale',
+      sf:           'Demi-Finales',
+      final:        'La Finale',
+      footer:       'Chaque exécution est enregistrée dans une base de données SQLite locale avec les paramètres qui l\'ont produite. Cette page ne lit que le dernier instantané du stockage objet — rien n\'est soumis à ce dépôt lorsque les résultats sont mis à jour.',
+    },
+    ar: {
+      pageTitle:    'توقعات كأس العالم 2026',
+      eyebrow:      'كأس العالم FIFA 2026 · احتمالات الفوز بالبطولة',
+      h1:           'جميع الفرق مرتبة حسب احتمال الفوز',
+      sub:          'مرتبة وفق نتائج نموذج محاكاة مونتي كارلو. تُحدَّث باستمرار مع ورود نتائج دور المجموعات.',
+      lastUpdated:  'آخر تحديث:',
+      modelLabel:   'النموذج:',
+      predictions:  'التوقعات:',
+      showTopOnly:  'عرض أفضل 10 فقط',
+      showAll:      n => `عرض جميع الـ ${n} فرق`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} صحيح (${pct}%)`,
+      fullTime:     'نهاية المباراة',
+      live:         'مباشر',
+      halfTime:     'استراحة المنتصف',
+      upcoming:     'مباراة قادمة',
+      matchResult:  'نتيجة المباراة',
+      currentMatch: 'المباراة الحالية',
+      upcomingMatch:'مباراة قادمة',
+      finalScore:   'النتيجة النهائية',
+      current:      'الحالية',
+      projAvg:      'المتوسط المتوقع',
+      projAvgScore: 'متوسط النتيجة المتوقعة',
+      draw:         'تعادل',
+      won:          name => `فازت ${name}`,
+      drawnMatch:   'انتهت المباراة بالتعادل',
+      noteUpcoming: 'متوسط متوقع بناءً على محاكاة بواسون لكامل المباراة',
+      noteAddedTime:'متوسط متوقع — المباراة في الوقت الإضافي، جارٍ محاكاة الوقت المتبقي',
+      noteRemaining:n => `متوسط متوقع بناءً على محاكاة بواسون للـ ~${n} دقيقة المتبقية + الوقت الإضافي`,
+      approx:       ' (تقريباً)',
+      errorLoad:    'تعذّر تحميل النتائج',
+      bracketEyebrow:'توقعات مونتي كارلو',
+      bracketTitle: 'جدول دور خروج المغلوب المتوقع',
+      bracketNote:  (total, n, pct) => `متوقع من ${total} محاكاة. يُظهر كل ربع نهائي الفريق الأكثر تأهلاً (${n} من أصل ${total} تشغيل، ${pct}%). أُخذت مباريات نصف النهائي والنهائي من المحاكاة التي التقى فيها فائزا ربع النهائي فعلياً.`,
+      qf:           'ربع النهائي',
+      sf:           'نصف النهائي',
+      final:        'النهائي',
+      footer:       'يُسجَّل كل تشغيل في قاعدة بيانات SQLite محلية مع المدخلات التي أنتجته. تقرأ هذه الصفحة فقط أحدث لقطة من التخزين السحابي — لا يُرفع أي شيء إلى هذا المستودع عند تحديث النتائج.',
+    },
+    bn: {
+      pageTitle:    'বিশ্বকাপ ২০২৬ পূর্বাভাস',
+      eyebrow:      'ফিফা বিশ্বকাপ ২০২৬ · শিরোপা জেতার সম্ভাবনা',
+      h1:           'জয়ের সম্ভাবনা অনুযায়ী সকল দল',
+      sub:          'মন্টে কার্লো সিমুলেশন মডেলের ফলাফলের ভিত্তিতে র‍্যাঙ্ক করা হয়েছে। গ্রুপ পর্বের ফলাফল আসার সাথে আপডেট হয়।',
+      lastUpdated:  'সর্বশেষ আপডেট:',
+      modelLabel:   'মডেল:',
+      predictions:  'পূর্বাভাস:',
+      showTopOnly:  'শুধু শীর্ষ ১০ দেখান',
+      showAll:      n => `সমস্ত ${n}টি দল দেখান`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} সঠিক (${pct}%)`,
+      fullTime:     'পূর্ণ সময়',
+      live:         'লাইভ',
+      halfTime:     'হাফ টাইম',
+      upcoming:     'আসন্ন ম্যাচ',
+      matchResult:  'ম্যাচের ফলাফল',
+      currentMatch: 'চলমান ম্যাচ',
+      upcomingMatch:'আসন্ন ম্যাচ',
+      finalScore:   'চূড়ান্ত স্কোর',
+      current:      'বর্তমান',
+      projAvg:      'প্রক্ষেপিত গড়',
+      projAvgScore: 'প্রক্ষেপিত গড় স্কোর',
+      draw:         'ড্র',
+      won:          name => `${name} জিতেছে`,
+      drawnMatch:   'ম্যাচ ড্রতে শেষ হয়েছে',
+      noteUpcoming: 'পুরো ম্যাচের পয়সন সিমুলেশনের ভিত্তিতে প্রক্ষেপিত গড়',
+      noteAddedTime:'প্রক্ষেপিত গড় — ম্যাচ অতিরিক্ত সময়ে, অবশিষ্ট সময় সিমুলেশন চলছে',
+      noteRemaining:n => `অবশিষ্ট ~${n} মিনিট + অতিরিক্ত সময়ের পয়সন সিমুলেশনের ভিত্তিতে প্রক্ষেপিত গড়`,
+      approx:       ' (আনুমানিক)',
+      errorLoad:    'ফলাফল লোড করা যায়নি',
+      bracketEyebrow:'মন্টে কার্লো অভিক্ষেপ',
+      bracketTitle: 'প্রক্ষেপিত নকআউট বন্ধনী',
+      bracketNote:  (total, n, pct) => `${total}টি সিমুলেশন থেকে প্রক্ষেপিত। প্রতিটি কোয়ার্টার-ফাইনালে সেই দলটি দেখানো হয়েছে যেটি সবচেয়ে বেশিবার এগিয়ে যায় (${total}টির মধ্যে ${n}টি, ${pct}%)।`,
+      qf:           'কোয়ার্টার-ফাইনাল',
+      sf:           'সেমি-ফাইনাল',
+      final:        'ফাইনাল',
+      footer:       'প্রতিটি রান এর ইনপুট সহ একটি স্থানীয় SQLite ডেটাবেসে রেকর্ড করা হয়। এই পেজটি শুধুমাত্র অবজেক্ট স্টোরেজ থেকে সর্বশেষ স্ন্যাপশট পড়ে — ফলাফল আপডেট হলে এই রিপোতে কিছু কমিট করা হয় না।',
+    },
+    pt: {
+      pageTitle:    'Previsão Copa 2026',
+      eyebrow:      'Copa do Mundo FIFA 2026 · Probabilidades de título',
+      h1:           'Todas as seleções por probabilidade de título',
+      sub:          'Classificadas com base no resultado de um modelo de simulação Monte Carlo. Atualizado à medida que os resultados da fase de grupos chegam.',
+      lastUpdated:  'Última atualização:',
+      modelLabel:   'Modelo:',
+      predictions:  'Previsões:',
+      showTopOnly:  'Mostrar apenas o top 10',
+      showAll:      n => `Mostrar todas as ${n} seleções`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} corretas (${pct}%)`,
+      fullTime:     'Tempo final',
+      live:         'AO VIVO',
+      halfTime:     'Intervalo',
+      upcoming:     'Próxima partida',
+      matchResult:  'Resultado da partida',
+      currentMatch: 'Partida em andamento',
+      upcomingMatch:'Próxima partida',
+      finalScore:   'Placar final',
+      current:      'Atual',
+      projAvg:      'Méd. projetada',
+      projAvgScore: 'Placar méd. projetado',
+      draw:         'empate',
+      won:          name => `${name} venceu`,
+      drawnMatch:   'A partida terminou em empate',
+      noteUpcoming: 'Média projetada com base na simulação de Poisson da partida completa',
+      noteAddedTime:'Média projetada — partida em acréscimos, simulando o tempo restante',
+      noteRemaining:n => `Média projetada com base na simulação de Poisson dos ~${n} min restantes + acréscimos`,
+      approx:       ' (aprox.)',
+      errorLoad:    'Não foi possível carregar os resultados',
+      bracketEyebrow:'Projeção Monte Carlo',
+      bracketTitle: 'Chaveamento das eliminatórias projetado',
+      bracketNote:  (total, n, pct) => `Projetado a partir de ${total} simulações. Cada quartas de final mostra a seleção que avança com maior frequência (${n} de ${total} simulações, ${pct}%). Os confrontos de semifinais e final são retirados das simulações em que os dois vencedores das quartas se enfrentaram de fato.`,
+      qf:           'Quartas de Final',
+      sf:           'Semifinais',
+      final:        'A Final',
+      footer:       'Cada execução é registrada em um banco de dados SQLite local com os parâmetros que a geraram. Esta página lê apenas o último snapshot do armazenamento de objetos — nada é enviado a este repositório quando os resultados são atualizados.',
+    },
+    ru: {
+      pageTitle:    'Прогноз ЧМ 2026',
+      eyebrow:      'Чемпионат мира FIFA 2026 · Шансы на победу',
+      h1:           'Все команды по вероятности победы',
+      sub:          'Ранжированы по результатам модели моделирования Монте-Карло. Обновляется по мере поступления результатов группового этапа.',
+      lastUpdated:  'Последнее обновление:',
+      modelLabel:   'Модель:',
+      predictions:  'Прогнозы:',
+      showTopOnly:  'Показать только топ-10',
+      showAll:      n => `Показать все ${n} команд`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} верных (${pct}%)`,
+      fullTime:     'Финальный свисток',
+      live:         'ПРЯМОЙ ЭФИР',
+      halfTime:     'Перерыв',
+      upcoming:     'Предстоящий матч',
+      matchResult:  'Результат матча',
+      currentMatch: 'Текущий матч',
+      upcomingMatch:'Предстоящий матч',
+      finalScore:   'Финальный счёт',
+      current:      'Текущий',
+      projAvg:      'Прогнозируемое ср.',
+      projAvgScore: 'Прогнозируемый ср. счёт',
+      draw:         'ничья',
+      won:          name => `${name} победила`,
+      drawnMatch:   'Матч завершился вничью',
+      noteUpcoming: 'Прогнозируемое среднее на основе симуляции Пуассона всего матча',
+      noteAddedTime:'Прогнозируемое среднее — матч в добавленное время, симулируется оставшееся время',
+      noteRemaining:n => `Прогнозируемое среднее на основе симуляции Пуассона оставшихся ~${n} мин + добавленное время`,
+      approx:       ' (прибл.)',
+      errorLoad:    'Не удалось загрузить результаты',
+      bracketEyebrow:'Прогноз Монте-Карло',
+      bracketTitle: 'Прогнозируемая турнирная сетка',
+      bracketNote:  (total, n, pct) => `Прогноз по ${total} симуляциям. В каждом четвертьфинале показана команда, которая выходит дальше чаще всего (${n} из ${total} запусков, ${pct}%). Полуфинальные и финальные пары взяты из симуляций, где оба победителя четвертьфиналов действительно встретились.`,
+      qf:           'Четвертьфиналы',
+      sf:           'Полуфиналы',
+      final:        'Финал',
+      footer:       'Каждый запуск записывается в локальную базу данных SQLite вместе с параметрами, которые его сформировали. Эта страница читает только последний снимок из объектного хранилища — при обновлении результатов в этот репозиторий ничего не фиксируется.',
+    },
+    ur: {
+      pageTitle:    'ورلڈ کپ 2026 پیش گوئی',
+      eyebrow:      'FIFA ورلڈ کپ 2026 · خطاب جیتنے کے امکانات',
+      h1:           'جیتنے کے امکان کے مطابق تمام ٹیمیں',
+      sub:          'مونٹی کارلو سمیولیشن ماڈل کے نتائج کی بنیاد پر درجہ بندی۔ گروپ مرحلے کے نتائج آنے کے ساتھ اپ ڈیٹ ہوتی ہے۔',
+      lastUpdated:  'آخری تازہ کاری:',
+      modelLabel:   'ماڈل:',
+      predictions:  'پیشین گوئیاں:',
+      showTopOnly:  'صرف ٹاپ 10 دکھائیں',
+      showAll:      n => `تمام ${n} ٹیمیں دکھائیں`,
+      accuracyFmt:  (c, p, pct) => `${c}/${p} درست (${pct}%)`,
+      fullTime:     'پورا وقت',
+      live:         'لائیو',
+      halfTime:     'ہاف ٹائم',
+      upcoming:     'آنے والا میچ',
+      matchResult:  'میچ کا نتیجہ',
+      currentMatch: 'موجودہ میچ',
+      upcomingMatch:'آنے والا میچ',
+      finalScore:   'آخری اسکور',
+      current:      'موجودہ',
+      projAvg:      'متوقع اوسط',
+      projAvgScore: 'متوقع اوسط اسکور',
+      draw:         'ڈرا',
+      won:          name => `${name} جیت گئی`,
+      drawnMatch:   'میچ ڈرا پر ختم ہوا',
+      noteUpcoming: 'پوری میچ کی پوآسوں سمیولیشن پر مبنی متوقع اوسط',
+      noteAddedTime:'متوقع اوسط — میچ اضافی وقت میں، باقی وقت کی سمیولیشن جاری ہے',
+      noteRemaining:n => `باقی ~${n} منٹ + اضافی وقت کی پوآسوں سمیولیشن پر مبنی متوقع اوسط`,
+      approx:       ' (تخمیناً)',
+      errorLoad:    'نتائج لوڈ نہیں ہو سکے',
+      bracketEyebrow:'مونٹی کارلو پیش گوئی',
+      bracketTitle: 'متوقع ناک آؤٹ بریکٹ',
+      bracketNote:  (total, n, pct) => `${total} سمیولیشنز سے متوقع۔ ہر کوارٹر-فائنل وہ ٹیم دکھاتا ہے جو سب سے زیادہ بار آگے بڑھتی ہے (${total} میں سے ${n} بار، ${pct}%)۔`,
+      qf:           'کوارٹر-فائنل',
+      sf:           'سیمی-فائنل',
+      final:        'فائنل',
+      footer:       'ہر رن کو اس کے ان پٹس کے ساتھ ایک مقامی SQLite ڈیٹا بیس میں ریکارڈ کیا جاتا ہے۔ یہ صفحہ صرف آبجیکٹ اسٹوریج سے تازہ ترین سنیپ شاٹ پڑھتا ہے — نتائج اپ ڈیٹ ہونے پر اس ریپو میں کچھ کمٹ نہیں ہوتا۔',
+    },
+  };
+
+  /* ── i18n core ────────────────────────────────────────────────── */
+  let currentLang = 'en';
+
+  function t(key, ...args) {
+    const langObj = LANGS[currentLang] || LANGS.en;
+    const entry   = key in langObj ? langObj[key] : LANGS.en[key];
+    if (typeof entry === 'function') return entry(...args);
+    return entry !== undefined ? entry : key;
+  }
+
+  function detectLang() {
+    const saved = localStorage.getItem('wc26-lang');
+    if (saved && LANGS[saved]) return saved;
+    const nav = (navigator.language || 'en').split('-')[0].toLowerCase();
+    return LANGS[nav] ? nav : 'en';
+  }
+
+  function setLang(lang) {
+    if (!LANGS[lang]) return;
+    currentLang = lang;
+    localStorage.setItem('wc26-lang', lang);
+    const rtl = lang === 'ar' || lang === 'ur';
+    document.documentElement.lang = lang;
+    document.documentElement.dir  = rtl ? 'rtl' : 'ltr';
+    document.title = t('pageTitle');
+    updateStaticText();
+    const picker = document.getElementById('lang-picker');
+    if (picker) picker.value = lang;
+    if (_cachedData) render(_cachedData, _cachedHistory);
+  }
+
+  function updateStaticText() {
+    document.getElementById('page-eyebrow').textContent  = t('eyebrow');
+    document.getElementById('page-h1').textContent       = t('h1');
+    document.getElementById('page-sub').textContent      = t('sub');
+    document.getElementById('label-updated').textContent = t('lastUpdated');
+    document.getElementById('label-model').textContent   = t('modelLabel');
+    const lp = document.getElementById('label-predictions');
+    if (lp) lp.textContent = t('predictions');
+    document.getElementById('footer-text').textContent   = t('footer');
+  }
+
+  /* ── Data cache (allows re-render on language change) ─────────── */
+  let _cachedData    = null;
+  let _cachedHistory = null;
+
+  /* ── Utilities ────────────────────────────────────────────────── */
   function formatTimestamp(iso) {
     try {
       const d = new Date(iso);
-      return d.toLocaleString(undefined, {
+      return d.toLocaleString(currentLang === 'en' ? undefined : currentLang, {
         year: 'numeric', month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
       });
@@ -514,7 +971,6 @@
   }
 
   /* ── Sparkline ────────────────────────────────────────────────── */
-
   function sparklineSVG(values, w, h) {
     if (!values || values.length < 2) return '';
     const min = Math.min(...values);
@@ -533,19 +989,17 @@
   }
 
   /* ── Show-all toggle ──────────────────────────────────────────── */
-
-  let showAll = false;
+  let showAll    = false;
   let totalTeams = 0;
 
   function toggleAll() {
     showAll = !showAll;
     document.getElementById('board').classList.toggle('show-all', showAll);
     document.getElementById('toggle-btn').textContent =
-      showAll ? 'Show top 10 only' : `Show all ${totalTeams} teams`;
+      showAll ? t('showTopOnly') : t('showAll', totalTeams);
   }
 
   /* ── Main render ──────────────────────────────────────────────── */
-
   function render(data, history) {
     const board = document.getElementById('board');
     const teams = [...data.teams].sort((a, b) => b.probability - a.probability);
@@ -575,7 +1029,6 @@
       `;
     }).join('');
 
-    // animate bars in after paint
     requestAnimationFrame(() => {
       board.querySelectorAll('.bar-fill').forEach(el => {
         el.style.width = el.dataset.width + '%';
@@ -592,16 +1045,17 @@
     if (totalTeams > 10) {
       const btn = document.getElementById('toggle-btn');
       btn.style.display = 'block';
-      btn.textContent   = `Show all ${totalTeams} teams`;
+      btn.textContent   = t('showAll', totalTeams);
     }
 
     const acc = data.accuracy;
     if (acc && acc.n_predicted > 0) {
       document.getElementById('accuracy-pill').style.display = '';
       document.getElementById('accuracy-label').textContent =
-        `${acc.n_correct}/${acc.n_predicted} correct (${acc.pct_correct}%)`;
+        t('accuracyFmt', acc.n_correct, acc.n_predicted, acc.pct_correct);
     }
 
+    updateStaticText();
     renderBracket(data.bracket);
     renderLiveMatches(data.liveMatches, data.generatedAt);
   }
@@ -612,14 +1066,12 @@
     const svg = (inner, label) =>
       `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="${label}">${inner}</svg>`;
 
-    // Cloud: overlapping circles + rect for flat bottom
     const cloud = (col, cx=14, cy=16, s=1) =>
       `<circle cx="${cx-4*s}" cy="${cy+s}"   r="${4.5*s}" fill="${col}"/>` +
       `<circle cx="${cx}"     cy="${cy-s}"   r="${5.5*s}" fill="${col}"/>` +
       `<circle cx="${cx+5*s}" cy="${cy+s}"   r="${4*s}"   fill="${col}"/>` +
       `<rect   x="${cx-8.5*s}" y="${cy+s}" width="${17.5*s}" height="${4.5*s}" fill="${col}"/>`;
 
-    // Sun: circle + 8 rays
     const sun = (cx=14, cy=14, r=5, col='#f59e0b') => {
       const dirs = [[0,-1],[0,1],[-1,0],[1,0],[-0.7,-0.7],[0.7,0.7],[0.7,-0.7],[-0.7,0.7]];
       return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}"/>` +
@@ -667,9 +1119,6 @@
 
   /* ── Live match card(s) ───────────────────────────────────────── */
   function renderOneCard(lm, generatedAt) {
-    // Hide live-score cards if data is stale (> 20 min old) — guards against
-    // a dead scheduler leaving a live score showing forever.
-    // UPCOMING and FINISHED are not suppressed by this guard.
     const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
     if (isStaleGuarded && generatedAt) {
       const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
@@ -679,29 +1128,29 @@
     const isFinished = lm.status === 'FINISHED';
     const isLive     = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
     const isHT       = lm.status === 'PAUSED';
+
     function fmtMinute(m, estimated) {
       const tilde = estimated ? '~' : '';
       return m > 90 ? `${tilde}90+${m - 90}'` : `${tilde}${m}'`;
     }
-    const timeStr = isHT ? 'Half time' : isLive ? fmtMinute(lm.minute, lm.minuteEstimated) : '';
+    const timeStr      = isHT ? t('halfTime') : isLive ? fmtMinute(lm.minute, lm.minuteEstimated) : '';
+    const dotHtml      = isLive ? '<span class="live-dot"></span>' : '';
+    const eyebrowText  = isFinished ? t('fullTime')
+                       : isLive     ? `${dotHtml} ${t('live')} · ${timeStr}`
+                       :              t('upcoming');
 
-    const dotHtml     = isLive ? '<span class="live-dot"></span>' : '';
-    const eyebrowText = isFinished ? 'Full time'
-                      : isLive    ? `${dotHtml} LIVE · ${timeStr}`
-                      :             'Upcoming match';
-
-    const approx = lm.minuteEstimated ? ' (approx.)' : '';
+    const approxStr = lm.minuteEstimated ? t('approx') : '';
     let noteText;
     if (isFinished) {
       const winner = lm.homeWin === 1 ? lm.home : lm.awayWin === 1 ? lm.away : null;
-      noteText = winner ? `${winner} won` : 'Match ended in a draw';
+      noteText = winner ? t('won', winner) : t('drawnMatch');
     } else if (!isLive) {
-      noteText = 'Projected avg. based on Poisson simulation of the full match';
+      noteText = t('noteUpcoming');
     } else if (lm.minute >= 90) {
-      noteText = `Projected avg. — match in added time, simulating remaining stoppage${approx}`;
+      noteText = t('noteAddedTime') + approxStr;
     } else {
       const minsLeft = 90 - lm.minute;
-      noteText = `Projected avg. based on Poisson simulation of the remaining ~${minsLeft} min + added time${approx}`;
+      noteText = t('noteRemaining', minsLeft) + approxStr;
     }
 
     const w = lm.weather;
@@ -723,31 +1172,32 @@
 
     const scoresHtml = isFinished ? `
       <div class="live-score-col">
-        <span class="live-score-label-top">Final score</span>
+        <span class="live-score-label-top">${t('finalScore')}</span>
         <span class="live-score-big">${lm.homeGoals} – ${lm.awayGoals}</span>
       </div>
     ` : isLive ? `
       <div class="live-score-col">
-        <span class="live-score-label-top">Current</span>
+        <span class="live-score-label-top">${t('current')}</span>
         <span class="live-score-big">${lm.homeGoals} – ${lm.awayGoals}</span>
       </div>
       <div class="live-score-divider"></div>
       <div class="live-score-col">
-        <span class="live-score-label-top">Projected avg.</span>
+        <span class="live-score-label-top">${t('projAvg')}</span>
         <span class="live-score-projected">${lm.expectedHome.toFixed(1)} – ${lm.expectedAway.toFixed(1)}</span>
       </div>
     ` : `
       <div class="live-score-col">
-        <span class="live-score-label-top">Projected avg. score</span>
+        <span class="live-score-label-top">${t('projAvgScore')}</span>
         <span class="live-score-big">${lm.expectedHome.toFixed(1)} – ${lm.expectedAway.toFixed(1)}</span>
       </div>
     `;
 
     const cardClass = isFinished ? 'live-card finished' : isLive ? 'live-card' : 'live-card upcoming';
+    const cardTitle = isFinished ? t('matchResult') : isLive ? t('currentMatch') : t('upcomingMatch');
     return `
       <div class="${cardClass}">
         <div class="live-eyebrow">${eyebrowText}</div>
-        <h3 class="live-title">${isFinished ? 'Match result' : isLive ? 'Current match' : 'Upcoming match'}</h3>
+        <h3 class="live-title">${cardTitle}</h3>
         <div class="live-teams-row">
           <div class="live-team-block">
             <img class="live-team-logo" src="${lm.homeLogo||''}" alt="" loading="lazy"/>
@@ -766,7 +1216,7 @@
         </div>
         <div class="live-prob-labels">
           <span class="prob-home">${fmtPct(lm.homeWin)} ${lm.home}</span>
-          <span class="prob-draw">${fmtPct(lm.draw)} draw</span>
+          <span class="prob-draw">${fmtPct(lm.draw)} ${t('draw')}</span>
           <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
         </div>
         ${weatherIconHtml}
@@ -783,9 +1233,7 @@
     el.innerHTML = cards.join('');
   }
 
-
   /* ── Bracket rendering ────────────────────────────────────────── */
-
   function matchCard(m, id) {
     if (!m) return `<div class="b-match" id="${id}"></div>`;
     return `
@@ -861,25 +1309,25 @@
 
     el.innerHTML = `
       <section class="bracket-section">
-        <p class="bracket-eyebrow">Monte Carlo projection</p>
-        <h2 class="bracket-title">Projected Knockout Bracket</h2>
-        <p class="bracket-note">Projected from ${nTotal} simulations. Each quarter-final shows the team that advances there most often (${nMatch} of ${nTotal} runs, ${pct}%). Semi-final and final pairings are drawn from the simulations where both quarter-final winners actually met — ensuring every round feeds coherently into the next.</p>
+        <p class="bracket-eyebrow">${t('bracketEyebrow')}</p>
+        <h2 class="bracket-title">${t('bracketTitle')}</h2>
+        <p class="bracket-note">${t('bracketNote', nTotal, nMatch, pct)}</p>
         <div class="bracket-outer">
           <div class="bracket-cols">
             <div class="bracket-col">
-              <p class="b-col-head">Quarter-Finals</p>
+              <p class="b-col-head">${t('qf')}</p>
               <div class="b-slots">
                 ${[0,1,2,3].map(i => matchCard(qf[i], `bm-qf-${i}`)).join('')}
               </div>
             </div>
             <div class="bracket-col">
-              <p class="b-col-head">Semi-Finals</p>
+              <p class="b-col-head">${t('sf')}</p>
               <div class="b-slots">
                 ${[0,1].map(i => matchCard(sf[i], `bm-sf-${i}`)).join('')}
               </div>
             </div>
             <div class="bracket-col">
-              <p class="b-col-head">The Final</p>
+              <p class="b-col-head">${t('final')}</p>
               <div class="b-slots">
                 ${matchCard(fi[0], 'bm-final-0')}
               </div>
@@ -895,27 +1343,37 @@
   window.addEventListener('resize', drawBracketLines);
 
   /* ── Error state ──────────────────────────────────────────────── */
-
   function renderError(msg) {
     document.getElementById('board').innerHTML = `
       <div class="error-card">
-        <div class="error-label">Could not load results</div>
+        <div class="error-label">${t('errorLoad')}</div>
         <div class="error-msg">${msg}</div>
       </div>`;
   }
 
   /* ── Fetch both payloads in parallel ──────────────────────────── */
-
   const latestP = fetch(DATA_URL)
     .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
 
   const historyP = fetch(HISTORY_URL)
     .then(res => res.ok ? res.json() : null)
-    .catch(() => null);  // history is non-critical — degrade gracefully
+    .catch(() => null);
 
   Promise.all([latestP, historyP])
-    .then(([data, history]) => render(data, history))
+    .then(([data, history]) => {
+      _cachedData    = data;
+      _cachedHistory = history;
+      render(data, history);
+    })
     .catch(err => renderError(err.message));
+
+  /* ── Initialise language on load ──────────────────────────────── */
+  currentLang = detectLang();
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir  = (currentLang === 'ar' || currentLang === 'ur') ? 'rtl' : 'ltr';
+  document.title = t('pageTitle');
+  updateStaticText();
+  document.getElementById('lang-picker').value = currentLang;
 </script>
 </body>
 </html>
