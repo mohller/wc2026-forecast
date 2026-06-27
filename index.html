@@ -1556,21 +1556,37 @@
       </div>`;
   }
 
-  /* ── Fetch both payloads in parallel ──────────────────────────── */
-  const latestP = fetch(DATA_URL)
-    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+  /* ── Fetch helpers ─────────────────────────────────────────────── */
+  function fetchLatest() {
+    return fetch(DATA_URL, { cache: 'no-cache' })
+      .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); });
+  }
+  function fetchHistory() {
+    return fetch(HISTORY_URL, { cache: 'no-cache' })
+      .then(res => res.ok ? res.json() : null)
+      .catch(() => null);
+  }
 
-  const historyP = fetch(HISTORY_URL)
-    .then(res => res.ok ? res.json() : null)
-    .catch(() => null);
-
-  Promise.all([latestP, historyP])
+  /* ── Initial load ──────────────────────────────────────────────── */
+  Promise.all([fetchLatest(), fetchHistory()])
     .then(([data, history]) => {
       _cachedData    = data;
       _cachedHistory = history;
       render(data, history);
     })
     .catch(err => renderError(err.message));
+
+  /* ── Auto-refresh: re-fetch latest.json every 60 s ─────────────── */
+  setInterval(() => {
+    fetchLatest()
+      .then(data => {
+        if (!_cachedData || data.generatedAt !== _cachedData.generatedAt) {
+          _cachedData = data;
+          render(data, _cachedHistory);
+        }
+      })
+      .catch(() => {});
+  }, 60_000);
 
   /* ── Initialise language on load ──────────────────────────────── */
   currentLang = detectLang();
