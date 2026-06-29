@@ -594,24 +594,30 @@
       showTopOnly:  'Show top 10 only',
       showAll:      n => `Show all ${n} teams`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} correct (${pct}%)`,
-      fullTime:     'Full time',
-      live:         'LIVE',
-      halfTime:     'Half time',
-      upcoming:     'Upcoming match',
-      matchResult:  'Match result',
-      currentMatch: 'Current match',
-      upcomingMatch:'Upcoming match',
-      finalScore:   'Final score',
-      current:      'Current',
-      projAvg:      'Projected avg.',
-      projAvgScore: 'Projected avg. score',
-      draw:         'draw',
-      won:          name => `${name} won`,
-      drawnMatch:   'Match ended in a draw',
-      noteUpcoming: 'Projected avg. based on Poisson simulation of the full match',
-      noteAddedTime:'Projected avg. — match in added time, simulating remaining stoppage',
-      noteRemaining:n => `Projected avg. based on Poisson simulation of the remaining ~${n} min + added time`,
-      approx:       ' (approx.)',
+      fullTime:        'Full time',
+      live:            'LIVE',
+      halfTime:        'Half time',
+      halfTimeET:      'HT (extra time)',
+      extraTime:       'Extra time',
+      penaltyShootout: 'Penalty shootout',
+      upcoming:        'Upcoming match',
+      matchResult:     'Match result',
+      currentMatch:    'Current match',
+      upcomingMatch:   'Upcoming match',
+      finalScore:      'Final score',
+      current:         'Current',
+      projAvg:         'Projected avg.',
+      projAvgScore:    'Projected avg. score',
+      draw:            'draw',
+      won:             name => `${name} won`,
+      wonOnPens:       name => `${name} won on penalties`,
+      drawnMatch:      'Match ended in a draw',
+      noteUpcoming:    'Projected avg. based on Poisson simulation of the full match',
+      noteAddedTime:   'Projected avg. — match in added time, simulating remaining stoppage',
+      noteRemaining:   n => `Projected avg. based on Poisson simulation of the remaining ~${n} min + added time`,
+      noteExtraTime:   n => n > 0 ? `Extra time · ~${n} min remaining. Draw eliminated — penalty odds included.` : 'Extra time · final minutes. Draw eliminated — penalty odds included.',
+      notePenalties:   'Penalty shootout in progress.',
+      approx:          ' (approx.)',
       errorLoad:    'Could not load results',
       bracketEyebrow:'Monte Carlo projection',
       bracketTitle: 'Projected Knockout Bracket',
@@ -632,10 +638,13 @@
       showTopOnly:  '只显示前10名',
       showAll:      n => `显示全部 ${n} 支球队`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} 正确 (${pct}%)`,
-      fullTime:     '全场结束',
-      live:         '直播',
-      halfTime:     '中场休息',
-      upcoming:     '即将到来的比赛',
+      fullTime:        '全场结束',
+      live:            '直播',
+      halfTime:        '中场休息',
+      halfTimeET:      '加时中场',
+      extraTime:       '加时赛',
+      penaltyShootout: '点球决赛',
+      upcoming:        '即将到来的比赛',
       matchResult:  '比赛结果',
       currentMatch: '当前比赛',
       upcomingMatch:'即将进行的比赛',
@@ -645,10 +654,13 @@
       projAvgScore: '预计平均比分',
       draw:         '平局',
       won:          name => `${name} 获胜`,
+      wonOnPens:    name => `${name} 通过点球获胜`,
       drawnMatch:   '比赛以平局结束',
       noteUpcoming: '基于泊松模拟整场比赛的预计平均值',
       noteAddedTime:'预计平均值 — 比赛进入补时阶段，正在模拟剩余时间',
       noteRemaining:n => `基于泊松模拟剩余约 ${n} 分钟及补时的预计平均值`,
+      noteExtraTime:n => n > 0 ? `加时赛 · 剩余约${n}分钟。不可平局 — 含点球概率。` : '加时赛 · 最后阶段。不可平局 — 含点球概率。',
+      notePenalties:'点球决赛进行中。',
       approx:       '（约）',
       errorLoad:    '无法加载结果',
       bracketEyebrow:'蒙特卡洛预测',
@@ -670,10 +682,13 @@
       showTopOnly:  'केवल शीर्ष 10 दिखाएं',
       showAll:      n => `सभी ${n} टीमें दिखाएं`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} सही (${pct}%)`,
-      fullTime:     'पूरा समय',
-      live:         'लाइव',
-      halfTime:     'हाफ टाइम',
-      upcoming:     'आगामी मैच',
+      fullTime:        'पूरा समय',
+      live:            'लाइव',
+      halfTime:        'हाफ टाइम',
+      halfTimeET:      'HT (अतिरिक्त समय)',
+      extraTime:       'अतिरिक्त समय',
+      penaltyShootout: 'पेनल्टी शूटआउट',
+      upcoming:        'आगामी मैच',
       matchResult:  'मैच परिणाम',
       currentMatch: 'वर्तमान मैच',
       upcomingMatch:'आगामी मैच',
@@ -683,10 +698,13 @@
       projAvgScore: 'अनुमानित औसत स्कोर',
       draw:         'ड्रॉ',
       won:          name => `${name} जीता`,
+      wonOnPens:    name => `${name} पेनल्टी पर जीता`,
       drawnMatch:   'मैच ड्रॉ रहा',
       noteUpcoming: 'पूरे मैच के पॉइसन सिमुलेशन पर आधारित अनुमानित औसत',
       noteAddedTime:'अनुमानित औसत — मैच अतिरिक्त समय में, शेष समय का सिमुलेशन',
       noteRemaining:n => `शेष ~${n} मिनट + अतिरिक्त समय के पॉइसन सिमुलेशन पर आधारित अनुमानित औसत`,
+      noteExtraTime:n => n > 0 ? `अतिरिक्त समय · ~${n} मिनट शेष। ड्रॉ संभव नहीं — पेनल्टी संभावना शामिल।` : 'अतिरिक्त समय · अंतिम क्षण। ड्रॉ संभव नहीं।',
+      notePenalties:'पेनल्टी शूटआउट जारी है।',
       approx:       ' (लगभग)',
       errorLoad:    'परिणाम लोड नहीं हो सके',
       bracketEyebrow:'मोंटे कार्लो प्रक्षेपण',
@@ -708,10 +726,13 @@
       showTopOnly:  'Mostrar solo el top 10',
       showAll:      n => `Mostrar los ${n} equipos`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} correctas (${pct}%)`,
-      fullTime:     'Tiempo completo',
-      live:         'EN VIVO',
-      halfTime:     'Medio tiempo',
-      upcoming:     'Próximo partido',
+      fullTime:        'Tiempo completo',
+      live:            'EN VIVO',
+      halfTime:        'Medio tiempo',
+      halfTimeET:      'Descanso (prórroga)',
+      extraTime:       'Prórroga',
+      penaltyShootout: 'Penaltis',
+      upcoming:        'Próximo partido',
       matchResult:  'Resultado del partido',
       currentMatch: 'Partido en curso',
       upcomingMatch:'Próximo partido',
@@ -721,10 +742,13 @@
       projAvgScore: 'Marcador prom. proyectado',
       draw:         'empate',
       won:          name => `${name} ganó`,
+      wonOnPens:    name => `${name} ganó en penaltis`,
       drawnMatch:   'El partido terminó en empate',
       noteUpcoming: 'Promedio proyectado basado en simulación de Poisson del partido completo',
       noteAddedTime:'Promedio proyectado — partido en tiempo adicional, simulando el tiempo restante',
       noteRemaining:n => `Promedio proyectado basado en simulación de Poisson de los ~${n} min restantes + tiempo adicional`,
+      noteExtraTime:n => n > 0 ? `Prórroga · ~${n} min restantes. Sin empate posible — probabilidad de penaltis incluida.` : 'Prórroga · últimos minutos. Sin empate posible.',
+      notePenalties:'Tanda de penaltis en curso.',
       approx:       ' (aprox.)',
       errorLoad:    'No se pudieron cargar los resultados',
       bracketEyebrow:'Proyección Monte Carlo',
@@ -746,10 +770,13 @@
       showTopOnly:  'Afficher uniquement le top 10',
       showAll:      n => `Afficher les ${n} équipes`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} correctes (${pct}%)`,
-      fullTime:     'Temps plein',
-      live:         'EN DIRECT',
-      halfTime:     'Mi-temps',
-      upcoming:     'Match à venir',
+      fullTime:        'Temps plein',
+      live:            'EN DIRECT',
+      halfTime:        'Mi-temps',
+      halfTimeET:      'Mi-temps (prol.)',
+      extraTime:       'Prolongations',
+      penaltyShootout: 'Tirs au but',
+      upcoming:        'Match à venir',
       matchResult:  'Résultat du match',
       currentMatch: 'Match en cours',
       upcomingMatch:'Match à venir',
@@ -759,10 +786,13 @@
       projAvgScore: 'Score moy. projeté',
       draw:         'match nul',
       won:          name => `${name} a gagné`,
+      wonOnPens:    name => `${name} a gagné aux tirs au but`,
       drawnMatch:   'Le match s\'est terminé sur un match nul',
       noteUpcoming: 'Moyenne projetée basée sur une simulation de Poisson du match complet',
       noteAddedTime:'Moyenne projetée — match en prolongation, simulation du temps restant',
       noteRemaining:n => `Moyenne projetée basée sur une simulation de Poisson des ~${n} min restantes + arrêts de jeu`,
+      noteExtraTime:n => n > 0 ? `Prolongations · ~${n} min restantes. Nul éliminé — probabilités de tirs au but incluses.` : 'Prolongations · dernières minutes. Nul éliminé.',
+      notePenalties:'Séance de tirs au but en cours.',
       approx:       ' (approx.)',
       errorLoad:    'Impossible de charger les résultats',
       bracketEyebrow:'Projection Monte Carlo',
@@ -784,10 +814,13 @@
       showTopOnly:  'عرض أفضل 10 فقط',
       showAll:      n => `عرض جميع المنتخبات الـ ${n}`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} صحيح (${pct}%)`,
-      fullTime:     'نهاية المباراة',
-      live:         'مباشر',
-      halfTime:     'استراحة نصف الشوط',
-      upcoming:     'مباراة قادمة',
+      fullTime:        'نهاية المباراة',
+      live:            'مباشر',
+      halfTime:        'استراحة نصف الشوط',
+      halfTimeET:      'استراحة الوقت الإضافي',
+      extraTime:       'الوقت الإضافي',
+      penaltyShootout: 'ركلات الترجيح',
+      upcoming:        'مباراة قادمة',
       matchResult:  'نتيجة المباراة',
       currentMatch: 'المباراة الجارية',
       upcomingMatch:'مباراة قادمة',
@@ -797,10 +830,13 @@
       projAvgScore: 'متوسط النتيجة المتوقع',
       draw:         'تعادل',
       won:          name => `فاز ${name}`,
+      wonOnPens:    name => `فاز ${name} بركلات الترجيح`,
       drawnMatch:   'انتهت المباراة بالتعادل',
       noteUpcoming: 'متوسط متوقع بناءً على محاكاة بواسون لكامل المباراة',
       noteAddedTime:'متوسط متوقع — المباراة في الوقت بدل الضائع',
       noteRemaining:n => `متوسط متوقع بناءً على محاكاة بواسون للدقائق الـ ~${n} المتبقية والوقت بدل الضائع`,
+      noteExtraTime:n => n > 0 ? `الوقت الإضافي · ~${n} دقيقة متبقية. التعادل مستحيل — تشمل احتمالات الترجيح.` : 'الوقت الإضافي · اللحظات الأخيرة. التعادل مستحيل.',
+      notePenalties:'ركلات الترجيح جارية.',
       approx:       ' (تقريباً)',
       errorLoad:    'تعذّر تحميل النتائج',
       bracketEyebrow:'توقعات مونتي كارلو',
@@ -822,10 +858,13 @@
       showTopOnly:  'শুধু শীর্ষ ১০ দেখান',
       showAll:      n => `সমস্ত ${n}টি দল দেখান`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} সঠিক (${pct}%)`,
-      fullTime:     'পূর্ণ সময়',
-      live:         'লাইভ',
-      halfTime:     'হাফ টাইম',
-      upcoming:     'আসন্ন ম্যাচ',
+      fullTime:        'পূর্ণ সময়',
+      live:            'লাইভ',
+      halfTime:        'হাফ টাইম',
+      halfTimeET:      'HT (অতিরিক্ত সময়)',
+      extraTime:       'অতিরিক্ত সময়',
+      penaltyShootout: 'পেনাল্টি শুটআউট',
+      upcoming:        'আসন্ন ম্যাচ',
       matchResult:  'ম্যাচের ফলাফল',
       currentMatch: 'চলমান ম্যাচ',
       upcomingMatch:'আসন্ন ম্যাচ',
@@ -835,10 +874,13 @@
       projAvgScore: 'প্রক্ষেপিত গড় স্কোর',
       draw:         'ড্র',
       won:          name => `${name} জিতেছে`,
+      wonOnPens:    name => `${name} পেনাল্টিতে জিতেছে`,
       drawnMatch:   'ম্যাচ ড্রতে শেষ হয়েছে',
       noteUpcoming: 'পুরো ম্যাচের পয়সন সিমুলেশনের ভিত্তিতে প্রক্ষেপিত গড়',
       noteAddedTime:'প্রক্ষেপিত গড় — ম্যাচ অতিরিক্ত সময়ে, অবশিষ্ট সময় সিমুলেশন চলছে',
       noteRemaining:n => `অবশিষ্ট ~${n} মিনিট + অতিরিক্ত সময়ের পয়সন সিমুলেশনের ভিত্তিতে প্রক্ষেপিত গড়`,
+      noteExtraTime:n => n > 0 ? `অতিরিক্ত সময় · ~${n} মিনিট বাকি। ড্র অসম্ভব — পেনাল্টি সম্ভাবনা অন্তর্ভুক্ত।` : 'অতিরিক্ত সময় · শেষ মুহূর্ত। ড্র অসম্ভব।',
+      notePenalties:'পেনাল্টি শুটআউট চলছে।',
       approx:       ' (আনুমানিক)',
       errorLoad:    'ফলাফল লোড করা যায়নি',
       bracketEyebrow:'মন্টে কার্লো অভিক্ষেপ',
@@ -860,10 +902,13 @@
       showTopOnly:  'Mostrar apenas o top 10',
       showAll:      n => `Mostrar todas as ${n} seleções`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} corretas (${pct}%)`,
-      fullTime:     'Tempo final',
-      live:         'AO VIVO',
-      halfTime:     'Intervalo',
-      upcoming:     'Próxima partida',
+      fullTime:        'Tempo final',
+      live:            'AO VIVO',
+      halfTime:        'Intervalo',
+      halfTimeET:      'Intervalo (prorr.)',
+      extraTime:       'Prorrogação',
+      penaltyShootout: 'Disputa de pênaltis',
+      upcoming:        'Próxima partida',
       matchResult:  'Resultado da partida',
       currentMatch: 'Partida em andamento',
       upcomingMatch:'Próxima partida',
@@ -873,10 +918,13 @@
       projAvgScore: 'Placar méd. projetado',
       draw:         'empate',
       won:          name => `${name} venceu`,
+      wonOnPens:    name => `${name} venceu nos pênaltis`,
       drawnMatch:   'A partida terminou em empate',
       noteUpcoming: 'Média projetada com base na simulação de Poisson da partida completa',
       noteAddedTime:'Média projetada — partida em acréscimos, simulando o tempo restante',
       noteRemaining:n => `Média projetada com base na simulação de Poisson dos ~${n} min restantes + acréscimos`,
+      noteExtraTime:n => n > 0 ? `Prorrogação · ~${n} min restantes. Empate eliminado — probabilidade de pênaltis incluída.` : 'Prorrogação · minutos finais. Empate eliminado.',
+      notePenalties:'Disputa de pênaltis em andamento.',
       approx:       ' (aprox.)',
       errorLoad:    'Não foi possível carregar os resultados',
       bracketEyebrow:'Projeção Monte Carlo',
@@ -898,10 +946,13 @@
       showTopOnly:  'Показать только топ-10',
       showAll:      n => `Показать все ${n} команд`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} верных (${pct}%)`,
-      fullTime:     'Финальный свисток',
-      live:         'ПРЯМОЙ ЭФИР',
-      halfTime:     'Перерыв',
-      upcoming:     'Предстоящий матч',
+      fullTime:        'Финальный свисток',
+      live:            'ПРЯМОЙ ЭФИР',
+      halfTime:        'Перерыв',
+      halfTimeET:      'Перерыв (доп. вр.)',
+      extraTime:       'Дополнительное время',
+      penaltyShootout: 'Серия пенальти',
+      upcoming:        'Предстоящий матч',
       matchResult:  'Результат матча',
       currentMatch: 'Текущий матч',
       upcomingMatch:'Предстоящий матч',
@@ -911,10 +962,13 @@
       projAvgScore: 'Прогнозируемый ср. счёт',
       draw:         'ничья',
       won:          name => `${name} победила`,
+      wonOnPens:    name => `${name} победила по пенальти`,
       drawnMatch:   'Матч завершился вничью',
       noteUpcoming: 'Прогнозируемое среднее на основе симуляции Пуассона всего матча',
       noteAddedTime:'Прогнозируемое среднее — матч в добавленное время, симулируется оставшееся время',
       noteRemaining:n => `Прогнозируемое среднее на основе симуляции Пуассона оставшихся ~${n} мин + добавленное время`,
+      noteExtraTime:n => n > 0 ? `Доп. время · ~${n} мин осталось. Ничья исключена — вероятность пенальти включена.` : 'Доп. время · последние минуты. Ничья исключена.',
+      notePenalties:'Серия пенальти в процессе.',
       approx:       ' (прибл.)',
       errorLoad:    'Не удалось загрузить результаты',
       bracketEyebrow:'Прогноз Монте-Карло',
@@ -936,10 +990,13 @@
       showTopOnly:  'Nur Top 10 anzeigen',
       showAll:      n => `Alle ${n} Teams anzeigen`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} richtig (${pct}%)`,
-      fullTime:     'Abpfiff',
-      live:         'LIVE',
-      halfTime:     'Halbzeit',
-      upcoming:     'Kommendes Spiel',
+      fullTime:        'Abpfiff',
+      live:            'LIVE',
+      halfTime:        'Halbzeit',
+      halfTimeET:      'Halbzeit (Verl.)',
+      extraTime:       'Verlängerung',
+      penaltyShootout: 'Elfmeterschießen',
+      upcoming:        'Kommendes Spiel',
       matchResult:  'Spielergebnis',
       currentMatch: 'Laufendes Spiel',
       upcomingMatch:'Kommendes Spiel',
@@ -949,10 +1006,13 @@
       projAvgScore: 'Proj. Durchschn.-Erg.',
       draw:         'Unentschieden',
       won:          name => `${name} hat gewonnen`,
+      wonOnPens:    name => `${name} hat im Elfmeterschießen gewonnen`,
       drawnMatch:   'Das Spiel endete unentschieden',
       noteUpcoming: 'Proj. Durchschnitt basierend auf Poisson-Simulation des gesamten Spiels',
       noteAddedTime:'Proj. Durchschnitt — Spiel in der Nachspielzeit, verbleibende Zeit wird simuliert',
       noteRemaining:n => `Proj. Durchschnitt basierend auf Poisson-Simulation der verbleibenden ~${n} Min. + Nachspielzeit`,
+      noteExtraTime:n => n > 0 ? `Verlängerung · noch ~${n} Min. Unentschieden ausgeschlossen — Elfmeter-Wkeit. inklusive.` : 'Verlängerung · letzte Minuten. Unentschieden ausgeschlossen.',
+      notePenalties:'Elfmeterschießen läuft.',
       approx:       ' (ca.)',
       errorLoad:    'Ergebnisse konnten nicht geladen werden',
       bracketEyebrow:'Monte-Carlo-Projektion',
@@ -974,10 +1034,13 @@
       showTopOnly:  'Mostra solo le prime 10',
       showAll:      n => `Mostra tutte le ${n} nazionali`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} corrette (${pct}%)`,
-      fullTime:     'Fine partita',
-      live:         'IN DIRETTA',
-      halfTime:     'Intervallo',
-      upcoming:     'Prossima partita',
+      fullTime:        'Fine partita',
+      live:            'IN DIRETTA',
+      halfTime:        'Intervallo',
+      halfTimeET:      'Intervallo (suppl.)',
+      extraTime:       'Tempi supplementari',
+      penaltyShootout: 'Calci di rigore',
+      upcoming:        'Prossima partita',
       matchResult:  'Risultato della partita',
       currentMatch: 'Partita in corso',
       upcomingMatch:'Prossima partita',
@@ -987,10 +1050,13 @@
       projAvgScore: 'Punteggio medio proiettato',
       draw:         'pareggio',
       won:          name => `${name} ha vinto`,
+      wonOnPens:    name => `${name} ha vinto ai rigori`,
       drawnMatch:   'La partita è terminata in pareggio',
       noteUpcoming: "Media proiettata basata sulla simulazione di Poisson dell'intera partita",
       noteAddedTime:'Media proiettata — partita nei minuti di recupero, simulazione del tempo rimanente',
       noteRemaining:n => `Media proiettata basata sulla simulazione di Poisson dei ~${n} minuti rimanenti + recupero`,
+      noteExtraTime:n => n > 0 ? `Supplementari · ~${n} min rimanenti. Pareggio escluso — probabilità rigori incluse.` : 'Supplementari · minuti finali. Pareggio escluso.',
+      notePenalties:'Calci di rigore in corso.',
       approx:       ' (circa)',
       errorLoad:    'Impossibile caricare i risultati',
       bracketEyebrow:'Proiezione Monte Carlo',
@@ -1012,10 +1078,13 @@
       showTopOnly:  'Εμφάνιση μόνο κορυφαίων 10',
       showAll:      n => `Εμφάνιση όλων των ${n} ομάδων`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} σωστές (${pct}%)`,
-      fullTime:     'Τέλος αγώνα',
-      live:         'ΖΩΝΤΑΝΑ',
-      halfTime:     'Ημίχρονο',
-      upcoming:     'Επερχόμενος αγώνας',
+      fullTime:        'Τέλος αγώνα',
+      live:            'ΖΩΝΤΑΝΑ',
+      halfTime:        'Ημίχρονο',
+      halfTimeET:      'HT (παράταση)',
+      extraTime:       'Παράταση',
+      penaltyShootout: 'Βολές πέναλτι',
+      upcoming:        'Επερχόμενος αγώνας',
       matchResult:  'Αποτέλεσμα αγώνα',
       currentMatch: 'Αγώνας σε εξέλιξη',
       upcomingMatch:'Επερχόμενος αγώνας',
@@ -1025,10 +1094,13 @@
       projAvgScore: 'Προβλ. μέσο σκορ',
       draw:         'ισοπαλία',
       won:          name => `${name} νίκησε`,
+      wonOnPens:    name => `${name} κέρδισε στα πέναλτι`,
       drawnMatch:   'Ο αγώνας έληξε ισόπαλος',
       noteUpcoming: 'Προβλεπόμενος μέσος όρος βάσει προσομοίωσης Poisson για ολόκληρο τον αγώνα',
       noteAddedTime:'Προβλεπόμενος μέσος όρος — αγώνας σε χρόνο προσθέτων, προσομοίωση υπολοίπου',
       noteRemaining:n => `Προβλεπόμενος μέσος όρος βάσει προσομοίωσης Poisson για τα ~${n} λεπτά που απομένουν + χρόνος προσθέτων`,
+      noteExtraTime:n => n > 0 ? `Παράταση · ~${n} λεπτά απομένουν. Ισοπαλία αποκλείεται — πιθανότητα πέναλτι συμπεριλαμβάνεται.` : 'Παράταση · τελευταία λεπτά. Ισοπαλία αποκλείεται.',
+      notePenalties:'Βολές πέναλτι σε εξέλιξη.',
       approx:       ' (περίπου)',
       errorLoad:    'Αδυναμία φόρτωσης αποτελεσμάτων',
       bracketEyebrow:'Προβολή Monte Carlo',
@@ -1050,10 +1122,13 @@
       showTopOnly:  'صرف ٹاپ 10 دکھائیں',
       showAll:      n => `تمام ${n} ٹیمیں دکھائیں`,
       accuracyFmt:  (c, p, pct) => `${c}/${p} درست (${pct}%)`,
-      fullTime:     'پورا وقت',
-      live:         'لائیو',
-      halfTime:     'ہاف ٹائم',
-      upcoming:     'آنے والا میچ',
+      fullTime:        'پورا وقت',
+      live:            'لائیو',
+      halfTime:        'ہاف ٹائم',
+      halfTimeET:      'HT (اضافی وقت)',
+      extraTime:       'اضافی وقت',
+      penaltyShootout: 'پینالٹی شوٹ آؤٹ',
+      upcoming:        'آنے والا میچ',
       matchResult:  'میچ کا نتیجہ',
       currentMatch: 'موجودہ میچ',
       upcomingMatch:'آنے والا میچ',
@@ -1063,10 +1138,13 @@
       projAvgScore: 'متوقع اوسط اسکور',
       draw:         'ڈرا',
       won:          name => `${name} جیت گئی`,
+      wonOnPens:    name => `${name} پینالٹی پر جیت گئی`,
       drawnMatch:   'میچ ڈرا پر ختم ہوا',
       noteUpcoming: 'پوری میچ کی پوآسوں سمیولیشن پر مبنی متوقع اوسط',
       noteAddedTime:'متوقع اوسط — میچ اضافی وقت میں، باقی وقت کی سمیولیشن جاری ہے',
       noteRemaining:n => `باقی ~${n} منٹ + اضافی وقت کی پوآسوں سمیولیشن پر مبنی متوقع اوسط`,
+      noteExtraTime:n => n > 0 ? `اضافی وقت · ~${n} منٹ باقی۔ ڈرا ممکن نہیں — پینالٹی امکان شامل۔` : 'اضافی وقت · آخری لمحات۔ ڈرا ممکن نہیں۔',
+      notePenalties:'پینالٹی شوٹ آؤٹ جاری ہے۔',
       approx:       ' (تخمیناً)',
       errorLoad:    'نتائج لوڈ نہیں ہو سکے',
       bracketEyebrow:'مونٹی کارلو پیش گوئی',
@@ -1324,33 +1402,53 @@
 
   /* ── Live match card(s) ───────────────────────────────────────── */
   function renderOneCard(lm, generatedAt) {
-    const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
+    const isStaleGuarded = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED'
+                        || lm.status === 'EXTRA_TIME' || lm.status === 'PENALTY_SHOOTOUT';
     if (isStaleGuarded && generatedAt) {
       const ageMin = (Date.now() - new Date(generatedAt).getTime()) / 60000;
       if (ageMin > 20) return null;
     }
 
-    const isFinished = lm.status === 'FINISHED';
-    const isLive     = lm.status === 'LIVE' || lm.status === 'IN_PLAY' || lm.status === 'PAUSED';
-    const isHT       = lm.status === 'PAUSED';
+    const isFinished  = lm.status === 'FINISHED';
+    const isPens      = lm.status === 'PENALTY_SHOOTOUT' || !!lm.isPenaltyShootout;
+    const isETHT      = lm.status === 'PAUSED' && lm.minute >= 90;
+    const isHT        = lm.status === 'PAUSED' && !isETHT;
+    const isExtraTime = !!lm.isKnockout && lm.minute > 90 && !isPens;
+    const isLive      = !isFinished && isStaleGuarded;
 
     function fmtMinute(m, estimated) {
       const tilde = estimated ? '~' : '';
+      if (isExtraTime && m > 90) return `ET ${tilde}${m - 90}'`;
       return m > 90 ? `${tilde}90+${m - 90}'` : `${tilde}${m}'`;
     }
-    const timeStr      = isHT ? t('halfTime') : isLive ? fmtMinute(lm.minute, lm.minuteEstimated) : '';
-    const dotHtml      = isLive ? '<span class="live-dot"></span>' : '';
-    const eyebrowText  = isFinished ? t('fullTime')
-                       : isLive     ? `${dotHtml} ${t('live')} · ${timeStr}`
-                       :              t('upcoming');
+    const timeStr = (isHT || isETHT || isPens) ? '' : isLive ? fmtMinute(lm.minute, lm.minuteEstimated) : '';
+    const dotHtml = isLive ? '<span class="live-dot"></span>' : '';
+
+    let eyebrowText;
+    if (isFinished)       eyebrowText = t('fullTime');
+    else if (isPens)      eyebrowText = `${dotHtml} ${t('penaltyShootout')}`;
+    else if (isETHT)      eyebrowText = `${dotHtml} ${t('halfTimeET')}`;
+    else if (isExtraTime) eyebrowText = `${dotHtml} ${t('extraTime')} · ${timeStr}`;
+    else if (isHT)        eyebrowText = `${dotHtml} ${t('halfTime')}`;
+    else if (isLive)      eyebrowText = `${dotHtml} ${t('live')} · ${timeStr}`;
+    else                  eyebrowText = t('upcoming');
 
     const approxStr = lm.minuteEstimated ? t('approx') : '';
     let noteText;
     if (isFinished) {
       const winner = lm.homeWin === 1 ? lm.home : lm.awayWin === 1 ? lm.away : null;
-      noteText = winner ? t('won', winner) : t('drawnMatch');
+      if (winner && lm.isKnockout && lm.draw === 0 && (lm.homeGoals === lm.awayGoals)) {
+        noteText = t('wonOnPens', winner);
+      } else {
+        noteText = winner ? t('won', winner) : t('drawnMatch');
+      }
     } else if (!isLive) {
       noteText = t('noteUpcoming');
+    } else if (isPens) {
+      noteText = t('notePenalties');
+    } else if (isExtraTime) {
+      const minsLeft = Math.max(0, 120 - lm.minute);
+      noteText = t('noteExtraTime', minsLeft) + (lm.minuteEstimated ? t('approx') : '');
     } else if (lm.minute >= 90) {
       noteText = t('noteAddedTime') + approxStr;
     } else {
@@ -1371,8 +1469,9 @@
       return r === 0 ? '<1%' : `${r}%`;
     }
 
+    const showDraw = !lm.isKnockout;
     const hw = Math.round(lm.homeWin * 100);
-    const dw = Math.round(lm.draw    * 100);
+    const dw = showDraw ? Math.round(lm.draw * 100) : 0;
     const aw = 100 - hw - dw;
 
     const scoresHtml = isFinished ? `
@@ -1421,7 +1520,7 @@
         </div>
         <div class="live-prob-labels">
           <span class="prob-home">${fmtPct(lm.homeWin)} ${lm.home}</span>
-          <span class="prob-draw">${fmtPct(lm.draw)} ${t('draw')}</span>
+          ${showDraw ? `<span class="prob-draw">${fmtPct(lm.draw)} ${t('draw')}</span>` : ''}
           <span class="prob-away">${fmtPct(lm.awayWin)} ${lm.away}</span>
         </div>
         ${weatherIconHtml}
